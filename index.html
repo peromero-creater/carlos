@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carlos Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: #2a2a3a;
+    --accent: #e8473f;
+    --accent2: #f5a623;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --success: #2ecc71;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+  .header { border-bottom: 1px solid var(--border); padding: 18px 40px; display: flex; align-items: center; gap: 16px; }
+  .flag-bar { width: 4px; height: 36px; background: linear-gradient(180deg, #c60b1e 33%, #ffc400 33%, #ffc400 67%, #c60b1e 67%); border-radius: 2px; }
+  .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .header h1 span { color: var(--accent2); }
+  .persona-tag { margin-left: auto; background: var(--surface2); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; font-size: 13px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .dot { display: inline-block; width: 7px; height: 7px; background: var(--success); border-radius: 50%; margin-right: 6px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .main { display: grid; grid-template-columns: 1fr 1fr; height: calc(100vh - 73px); }
+  .panel { padding: 28px 36px; border-right: 1px solid var(--border); overflow-y: auto; }
+  .panel:last-child { border-right: none; }
+  .panel-title { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 22px; }
+  .field { margin-bottom: 18px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 7px; }
+  input, textarea, select { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 11px 14px; transition: border-color 0.2s; outline: none; }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent2); }
+  textarea { resize: vertical; min-height: 75px; }
+  select option { background: var(--surface2); }
+  .tone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tone-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; padding: 10px; cursor: pointer; transition: all 0.15s; text-align: center; }
+  .tone-btn:hover { border-color: var(--accent2); color: var(--text); }
+  .tone-btn.active { background: var(--accent2); border-color: var(--accent2); color: #000; }
+  .generate-btn { width: 100%; background: var(--accent); border: none; border-radius: 8px; color: #fff; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; padding: 13px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; margin-top: 6px; }
+  .generate-btn:hover { background: #ff5b52; transform: translateY(-1px); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .output-area { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px; min-height: 130px; font-family: 'DM Mono', monospace; font-size: 14px; line-height: 1.7; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+  .output-area.placeholder { color: var(--muted); font-style: italic; }
+  .output-area.loading { color: var(--accent2); }
+  .tweet-actions { display: flex; gap: 10px; margin-top: 10px; }
+  .action-btn { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; padding: 11px; cursor: pointer; transition: all 0.15s; }
+  .action-btn:hover { border-color: var(--accent2); }
+  .action-btn.post-btn { background: var(--success); border-color: var(--success); color: #fff; }
+  .action-btn.post-btn:hover { background: #27ae60; }
+  .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .char-count { text-align: right; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .char-count.over { color: var(--accent); }
+  .settings-section { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--border); }
+  .toggle-settings { background: none; border: none; color: var(--muted); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 8px; }
+  .toggle-settings:hover { color: var(--text); }
+  .settings-body { margin-top: 14px; }
+  .settings-body.hidden { display: none; }
+  .key-row { display: flex; gap: 8px; align-items: center; }
+  .key-row input { flex: 1; }
+  .save-key-btn { background: var(--accent2); border: none; border-radius: 8px; color: #000; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; padding: 11px 14px; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
+  .save-key-btn:hover { opacity: 0.85; }
+  .key-status { font-size: 11px; margin-top: 5px; font-family: 'DM Mono', monospace; }
+  .key-status.saved { color: var(--success); }
+  .key-status.empty { color: var(--muted); }
+  .clear-keys-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; padding: 6px 12px; cursor: pointer; margin-top: 12px; transition: all 0.15s; }
+  .clear-keys-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .history-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+  .history-item:hover { border-color: var(--accent2); }
+  .history-item .hi-tweet { font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.5; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .history-item .hi-meta { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+  .status-msg { padding: 10px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-top: 10px; display: none; }
+  .status-msg.success { background: rgba(46,204,113,0.15); color: var(--success); display: block; }
+  .status-msg.error { background: rgba(232,71,63,0.15); color: var(--accent); display: block; }
+  .edit-output { width: 100%; background: var(--surface); border: 1px solid var(--accent2); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; line-height: 1.7; padding: 18px; resize: vertical; min-height: 130px; outline: none; display: none; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="flag-bar"></div>
+  <h1>Carlos <span>Console</span></h1>
+  <div class="persona-tag"><span class="dot"></span>@carlosmendpoz</div>
+</div>
+
+<div class="main">
+  <!-- LEFT: Input -->
+  <div class="panel">
+    <div class="panel-title">📥 Input</div>
+    <div class="field">
+      <label>Tweet URL or text to react to</label>
+      <textarea id="tweetInput" placeholder="Paste tweet URL or text here..."></textarea>
+    </div>
+    <div class="field">
+      <label>Context hints (optional)</label>
+      <textarea id="hintsInput" placeholder="e.g. Galatasaray transfer, striker from Brazil..." style="min-height:58px;"></textarea>
+    </div>
+    <div class="field">
+      <label>Tone</label>
+      <div class="tone-grid">
+        <button class="tone-btn active" onclick="setTone(this,'passionate')">⚽ Passionate</button>
+        <button class="tone-btn" onclick="setTone(this,'sarcastic')">😏 Sarcastic</button>
+        <button class="tone-btn" onclick="setTone(this,'curious')">🤔 Curious</button>
+        <button class="tone-btn" onclick="setTone(this,'funny')">😂 Funny</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Language</label>
+      <select id="langSelect">
+        <option value="Spanish">Spanish 🇪🇸</option>
+        <option value="English">English 🇬🇧</option>
+        <option value="Spanish with a few Turkish words mixed in naturally">Mixed (Spanish + Turkish)</option>
+      </select>
+    </div>
+    <button class="generate-btn" id="generateBtn" onclick="generateTweet()">✦ Generate Tweet</button>
+
+    <!-- API Settings -->
+    <div class="settings-section">
+      <button class="toggle-settings" onclick="toggleSettings()">⚙ API Settings <span id="settingsArrow">▼</span></button>
+      <div class="settings-body hidden" id="settingsBody">
+        <div class="field" style="margin-top:14px;">
+          <label>Claude API Key</label>
+          <div class="key-row">
+            <input type="password" id="claudeKeyInput" placeholder="sk-ant-api03-..." />
+            <button class="save-key-btn" onclick="saveKey('claude')">Save</button>
+          </div>
+          <div class="key-status" id="claudeKeyStatus"></div>
+        </div>
+        <div class="field">
+          <label>Buffer Personal API Key</label>
+          <div class="key-row">
+            <input type="password" id="bufferKeyInput" placeholder="From Buffer → API → Generate Key" />
+            <button class="save-key-btn" onclick="saveKey('buffer')">Save</button>
+          </div>
+          <div class="key-status" id="bufferKeyStatus"></div>
+        </div>
+        <small style="color:var(--muted);font-size:12px;line-height:1.6;">
+          Keys are saved in your browser's local storage. They never leave your computer.
+        </small>
+        <br/>
+        <button class="clear-keys-btn" onclick="clearKeys()">🗑 Clear saved keys</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Output -->
+  <div class="panel">
+    <div class="panel-title">✦ Output</div>
+    <div class="field">
+      <label>Generated Tweet</label>
+      <div class="output-area placeholder" id="outputDisplay">Tweet will appear here...</div>
+      <textarea class="edit-output" id="editableOutput" oninput="updateCharCount()"></textarea>
+      <div class="char-count" id="charCount"></div>
+    </div>
+    <div class="tweet-actions">
+      <button class="action-btn" id="editBtn" onclick="toggleEdit()" disabled>✏ Edit</button>
+      <button class="action-btn" id="copyBtn" onclick="copyTweet()" disabled>⧉ Copy</button>
+      <button class="action-btn post-btn" id="postBtn" onclick="postToBuffer()" disabled>↑ Post Now</button>
+    </div>
+    <div id="statusMsg" class="status-msg"></div>
+
+    <div class="settings-section">
+      <button class="toggle-settings" onclick="toggleHistory()">🕐 History <span id="historyArrow">▼</span></button>
+      <div class="settings-body hidden" id="historyBody">
+        <div id="historyList" style="margin-top:14px;">
+          <div style="color:var(--muted);font-size:13px;">No tweets yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BUFFER_CHANNEL_ID = "69cab077af47dacb696e81c1";
+const PERSONA = `You are Carlos Mendez (@carlosmendpoz), a 25-year-old Spanish guy from Madrid. You are a HUGE Galatasaray fan since 2008 — that is your whole Twitter identity. You follow Turkish football obsessively. You occasionally react to trending Turkish topics casually, like a curious foreigner. Never political, never offensive.
+
+Rules:
+- SHORT tweets (under 200 chars ideally, max 280)
+- Casual, like a real young Spanish guy on Twitter
+- 1-2 emojis max
+- No hashtags unless it fits perfectly naturally
+- Varied openers — never start the same way twice
+- Only output the tweet text. Nothing else.`;
+
+let currentTweet = '', selectedTone = 'passionate', isEditing = false, history = [];
+
+// Load saved keys on startup
+window.addEventListener('load', () => {
+  loadKeyStatus('claude');
+  loadKeyStatus('buffer');
+});
+
+function saveKey(type) {
+  const input = document.getElementById(type + 'KeyInput');
+  const val = input.value.trim();
+  if (!val) { showKeyStatus(type, 'empty'); return; }
+  localStorage.setItem('carlos_' + type + '_key', val);
+  input.value = '';
+  showKeyStatus(type, 'saved');
+}
+
+function getKey(type) {
+  return localStorage.getItem('carlos_' + type + '_key') || '';
+}
+
+function loadKeyStatus(type) {
+  const saved = getKey(type);
+  showKeyStatus(type, saved ? 'saved' : 'empty');
+}
+
+function showKeyStatus(type, state) {
+  const el = document.getElementById(type + 'KeyStatus');
+  if (state === 'saved') {
+    el.className = 'key-status saved';
+    el.textContent = '✓ Key saved in browser';
+  } else {
+    el.className = 'key-status empty';
+    el.textContent = 'No key saved yet';
+  }
+}
+
+function clearKeys() {
+  if (!confirm('Clear both saved API keys?')) return;
+  localStorage.removeItem('carlos_claude_key');
+  localStorage.removeItem('carlos_buffer_key');
+  document.getElementById('claudeKeyInput').value = '';
+  document.getElementById('bufferKeyInput').value = '';
+  showKeyStatus('claude', 'empty');
+  showKeyStatus('buffer', 'empty');
+  showStatus('Keys cleared.', 'success');
+  setTimeout(() => showStatus('',''), 2000);
+}
+
+function setTone(btn, tone) {
+  document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedTone = tone;
+}
+
+function toggleSettings() {
+  const b = document.getElementById('settingsBody'), a = document.getElementById('settingsArrow');
+  b.classList.toggle('hidden'); a.textContent = b.classList.contains('hidden') ? '▼' : '▲';
+  if (!b.classList.contains('hidden')) { loadKeyStatus('claude'); loadKeyStatus('buffer'); }
+}
+
+function toggleHistory() {
+  const b = document.getElementById('historyBody'), a = document.getElementById('historyArrow');
+  b.classList.toggle('hidden'); a.textContent = b.classList.contains('hidden') ? '▼' : '▲';
+}
+
+function toggleEdit() {
+  const display = document.getElementById('outputDisplay');
+  const editable = document.getElementById('editableOutput');
+  const editBtn = document.getElementById('editBtn');
+  isEditing = !isEditing;
+  if (isEditing) {
+    editable.value = currentTweet;
+    display.style.display = 'none'; editable.style.display = 'block';
+    editBtn.textContent = '✓ Done'; updateCharCount();
+  } else {
+    currentTweet = editable.value;
+    display.textContent = currentTweet; display.className = 'output-area';
+    display.style.display = 'block'; editable.style.display = 'none';
+    editBtn.textContent = '✏ Edit'; updateCharCount();
+  }
+}
+
+function updateCharCount() {
+  const text = isEditing ? document.getElementById('editableOutput').value : currentTweet;
+  const el = document.getElementById('charCount');
+  el.textContent = `${text.length} / 280`;
+  el.className = text.length > 280 ? 'char-count over' : 'char-count';
+  if (isEditing) currentTweet = document.getElementById('editableOutput').value;
+}
+
+async function generateTweet() {
+  const tweetInput = document.getElementById('tweetInput').value.trim();
+  const hints = document.getElementById('hintsInput').value.trim();
+  const lang = document.getElementById('langSelect').value;
+  const claudeKey = getKey('claude');
+
+  if (!tweetInput) { showStatus('Paste a tweet or text first.', 'error'); return; }
+  if (!claudeKey) {
+    document.getElementById('settingsBody').classList.remove('hidden');
+    document.getElementById('settingsArrow').textContent = '▲';
+    showStatus('Save your Claude API key in settings first.', 'error'); return;
+  }
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true; btn.textContent = '⟳ Generating...';
+  const display = document.getElementById('outputDisplay');
+  display.className = 'output-area loading'; display.textContent = 'Carlos is thinking...';
+  document.getElementById('charCount').textContent = '';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        system: PERSONA,
+        messages: [{ role: 'user', content: `Tweet/news: "${tweetInput}"\n${hints ? 'Context: ' + hints : ''}\nTone: ${selectedTone}. Language: ${lang}.` }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    currentTweet = data.content[0].text.trim().replace(/^["']|["']$/g, '');
+    display.className = 'output-area'; display.textContent = currentTweet;
+    ['editBtn','copyBtn','postBtn'].forEach(id => document.getElementById(id).disabled = false);
+    updateCharCount(); showStatus('', ''); addToHistory(tweetInput, currentTweet);
+  } catch(err) {
+    display.className = 'output-area placeholder'; display.textContent = 'Error generating tweet.';
+    showStatus('Error: ' + err.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = '✦ Generate Tweet';
+}
+
+async function postToBuffer() {
+  const bufferKey = getKey('buffer');
+  if (!bufferKey) {
+    document.getElementById('settingsBody').classList.remove('hidden');
+    document.getElementById('settingsArrow').textContent = '▲';
+    showStatus('Save your Buffer API key in settings first.', 'error'); return;
+  }
+  if (!currentTweet) { showStatus('No tweet to post.', 'error'); return; }
+  if (currentTweet.length > 280) { showStatus('Tweet over 280 chars. Edit it first.', 'error'); return; }
+
+  const btn = document.getElementById('postBtn');
+  btn.disabled = true; btn.textContent = '↑ Posting...';
+
+  const query = `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { post { id status scheduledAt } userErrors { message } } }`;
+  const nowISO = new Date().toISOString();
+  const variables = { input: { channelId: BUFFER_CHANNEL_ID, text: currentTweet, scheduledAt: nowISO } };
+
+  try {
+    const res = await fetch('https://api.buffer.com/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${bufferKey}` },
+      body: JSON.stringify({ query, variables })
+    });
+    const rawText = await res.text();
+    console.log('Buffer raw response:', rawText);
+    let data;
+    try { data = JSON.parse(rawText); } catch(e) { throw new Error('Buffer returned non-JSON: ' + rawText.substring(0, 200)); }
+    if (data.errors?.length) throw new Error(JSON.stringify(data.errors));
+    if (data.data?.createPost?.userErrors?.length) throw new Error(data.data.createPost.userErrors[0].message);
+    const postStatus = data.data?.createPost?.post?.status || 'sent';
+    showStatus(`✓ Success! Status: ${postStatus} — check Buffer queue or X.`, 'success');
+  } catch(err) { showStatus('Post failed: ' + err.message, 'error'); }
+
+  btn.disabled = false; btn.textContent = '↑ Post Now';
+}
+
+function copyTweet() {
+  navigator.clipboard.writeText(currentTweet);
+  showStatus('Copied!', 'success'); setTimeout(() => showStatus('',''), 2000);
+}
+
+function addToHistory(input, tweet) {
+  history.unshift({ input: input.substring(0,50), tweet, time: new Date().toLocaleTimeString() });
+  if (history.length > 15) history.pop(); renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  list.innerHTML = history.length
+    ? history.map((h,i) => `<div class="history-item" onclick="loadHistory(${i})"><div class="hi-tweet">${h.tweet}</div><div class="hi-meta"><span>${h.input}...</span><span>${h.time}</span></div></div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;">No tweets yet.</div>';
+}
+
+function loadHistory(i) {
+  currentTweet = history[i].tweet;
+  const display = document.getElementById('outputDisplay');
+  display.className = 'output-area'; display.textContent = currentTweet;
+  ['editBtn','copyBtn','postBtn'].forEach(id => document.getElementById(id).disabled = false);
+  updateCharCount();
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('statusMsg');
+  el.className = 'status-msg'; if (type) el.classList.add(type);
+  el.textContent = msg; if (!msg) el.style.display = 'none';
+}
+</script>
+</body>
+</html>
