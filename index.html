@@ -131,16 +131,8 @@
           </div>
           <div class="key-status" id="claudeKeyStatus"></div>
         </div>
-        <div class="field">
-          <label>Buffer Personal API Key</label>
-          <div class="key-row">
-            <input type="password" id="bufferKeyInput" placeholder="From Buffer → API → Generate Key" />
-            <button class="save-key-btn" onclick="saveKey('buffer')">Save</button>
-          </div>
-          <div class="key-status" id="bufferKeyStatus"></div>
-        </div>
         <small style="color:var(--muted);font-size:12px;line-height:1.6;">
-          Keys are saved in your browser's local storage. They never leave your computer.
+          Claude key is saved in your browser's local storage. Twitter keys are stored securely in Netlify — not in your browser or code.
         </small>
         <br/>
         <button class="clear-keys-btn" onclick="clearKeys()">🗑 Clear saved keys</button>
@@ -176,7 +168,6 @@
 </div>
 
 <script>
-const BUFFER_CHANNEL_ID = "69cab077af47dacb696e81c1";
 const PERSONA = `You are Carlos Mendez (@carlosmendpoz), a 25-year-old Spanish guy from Madrid. You are a HUGE Galatasaray fan since 2008 — that is your whole Twitter identity. You follow Turkish football obsessively. You occasionally react to trending Turkish topics casually, like a curious foreigner. Never political, never offensive.
 
 Rules:
@@ -225,13 +216,10 @@ function showKeyStatus(type, state) {
 }
 
 function clearKeys() {
-  if (!confirm('Clear both saved API keys?')) return;
+  if (!confirm('Clear saved Claude API key?')) return;
   localStorage.removeItem('carlos_claude_key');
-  localStorage.removeItem('carlos_buffer_key');
   document.getElementById('claudeKeyInput').value = '';
-  document.getElementById('bufferKeyInput').value = '';
   showKeyStatus('claude', 'empty');
-  showKeyStatus('buffer', 'empty');
   showStatus('Keys cleared.', 'success');
   setTimeout(() => showStatus('',''), 2000);
 }
@@ -245,7 +233,7 @@ function setTone(btn, tone) {
 function toggleSettings() {
   const b = document.getElementById('settingsBody'), a = document.getElementById('settingsArrow');
   b.classList.toggle('hidden'); a.textContent = b.classList.contains('hidden') ? '▼' : '▲';
-  if (!b.classList.contains('hidden')) { loadKeyStatus('claude'); loadKeyStatus('buffer'); }
+  if (!b.classList.contains('hidden')) { loadKeyStatus('claude'); }
 }
 
 function toggleHistory() {
@@ -322,12 +310,6 @@ async function generateTweet() {
 }
 
 async function postToBuffer() {
-  const bufferKey = getKey('buffer');
-  if (!bufferKey) {
-    document.getElementById('settingsBody').classList.remove('hidden');
-    document.getElementById('settingsArrow').textContent = '▲';
-    showStatus('Save your Buffer API key in settings first.', 'error'); return;
-  }
   if (!currentTweet) { showStatus('No tweet to post.', 'error'); return; }
   if (currentTweet.length > 280) { showStatus('Tweet over 280 chars. Edit it first.', 'error'); return; }
 
@@ -335,21 +317,17 @@ async function postToBuffer() {
   btn.disabled = true; btn.textContent = '↑ Posting...';
 
   try {
-    const res = await fetch('/.netlify/functions/buffer-post', {
+    const res = await fetch('/.netlify/functions/tweet-post', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: currentTweet, channelId: BUFFER_CHANNEL_ID, bufferKey })
+      body: JSON.stringify({ text: currentTweet })
     });
     const rawText = await res.text();
-    console.log('Buffer raw response:', rawText);
+    console.log('Twitter raw response:', rawText);
     let data;
     try { data = JSON.parse(rawText); } catch(e) { throw new Error('Non-JSON response: ' + rawText.substring(0, 200)); }
     if (data.error) throw new Error(data.error);
-    if (data.errors?.length) throw new Error(data.errors[0].message);
-    const result = data.data?.createPost;
-    if (result?.message) throw new Error(result.message);
-    const postStatus = result?.post?.status || 'sent';
-    showStatus(`✓ Success! Status: ${postStatus} — check Buffer queue or X.`, 'success');
+    showStatus(`✓ Posted! Tweet ID: ${data.id} — check @carlosmendpoz`, 'success');
   } catch(err) { showStatus('Post failed: ' + err.message, 'error'); }
 
   btn.disabled = false; btn.textContent = '↑ Post Now';
