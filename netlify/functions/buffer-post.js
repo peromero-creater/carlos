@@ -13,7 +13,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing text, channelId, or bufferKey' }) };
   }
 
-  const query = `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { post { id status scheduledAt } userErrors { message } } }`;
+  const query = `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id status scheduledAt } } ... on PostActionError { message } } }`;
   const scheduledAt = new Date(Date.now() + 2 * 60 * 1000).toISOString();
 
   try {
