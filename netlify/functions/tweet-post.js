@@ -42,6 +42,10 @@ exports.handler = async (event) => {
   const { text } = body;
   if (!text) return { statusCode: 400, body: JSON.stringify({ error: 'Missing tweet text' }) };
 
+  const missingKeys = ['TWITTER_API_KEY','TWITTER_API_SECRET','TWITTER_ACCESS_TOKEN','TWITTER_ACCESS_TOKEN_SECRET']
+    .filter(k => !process.env[k]);
+  if (missingKeys.length) return { statusCode: 500, body: JSON.stringify({ error: 'Missing env vars: ' + missingKeys.join(', ') }) };
+
   const url = 'https://api.twitter.com/2/tweets';
   const authHeader = buildAuthHeader('POST', url, {});
 
@@ -56,7 +60,7 @@ exports.handler = async (event) => {
     });
 
     const data = await res.json();
-    if (data.errors) throw new Error(data.errors[0]?.message || JSON.stringify(data.errors));
+    if (res.status !== 201) throw new Error(`Twitter ${res.status}: ${JSON.stringify(data)}`);
     if (!data.data?.id) throw new Error(JSON.stringify(data));
 
     return {
