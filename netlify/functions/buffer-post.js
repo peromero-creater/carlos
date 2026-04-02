@@ -14,7 +14,6 @@ exports.handler = async (event) => {
   }
 
   const query = `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id status } } } }`;
-  const scheduledAt = new Date(Date.now() + 2 * 60 * 1000).toISOString();
 
   try {
     const res = await fetch('https://api.buffer.com/graphql', {
@@ -23,7 +22,7 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${bufferKey}`
       },
-      body: JSON.stringify({ query, variables: { input: { channelId, text, scheduledAt } } })
+      body: JSON.stringify({ query, variables: { input: { channelId, text, schedulingType: 'queue', mode: 'auto' } } })
     });
 
     const data = await res.json();
