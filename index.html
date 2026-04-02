@@ -19,19 +19,16 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
-  #lockScreen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+  #lockScreen { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: transform 0.7s cubic-bezier(0.4,0,0.2,1); background: url('https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=1600&q=80') center/cover no-repeat; }
+  #lockScreen::before { content:''; position:absolute; inset:0; background: rgba(0,0,0,0.45); backdrop-filter: blur(2px); }
   #lockScreen.slide-up { transform: translateY(-100%); pointer-events: none; }
-  .lock-logo { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
-  .lock-logo span { color: var(--accent2); }
-  .pin-dots { display: flex; gap: 16px; }
-  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); background: transparent; transition: all 0.15s; }
-  .pin-dot.filled { background: var(--accent2); border-color: var(--accent2); }
-  .pin-dot.error { background: var(--accent); border-color: var(--accent); }
-  .pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .pin-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; width: 72px; height: 72px; cursor: pointer; transition: all 0.1s; display: flex; align-items: center; justify-content: center; }
-  .pin-btn:hover { background: var(--surface2); border-color: var(--accent2); }
-  .pin-btn:active { transform: scale(0.94); }
-  .pin-btn.del { font-size: 16px; color: var(--muted); }
+  #lockScreen > * { position: relative; z-index: 1; }
+  .lock-time { font-size: 86px; font-weight: 200; color: #fff; letter-spacing: -4px; line-height: 1; text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
+  .lock-date { font-size: 16px; color: rgba(255,255,255,0.8); font-weight: 400; letter-spacing: 0.5px; margin-bottom: 28px; }
+  .lock-icon { font-size: 42px; opacity: 0.9; transition: all 0.2s; user-select: none; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4)); }
+  .lock-icon.shake { animation: shake 0.4s; }
+  .lock-icon.unlocking { transform: scale(1.2); opacity: 1; filter: drop-shadow(0 0 16px #f5a623); }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
   .header { border-bottom: 1px solid var(--border); padding: 18px 40px; display: flex; align-items: center; gap: 16px; }
   .flag-bar { width: 4px; height: 36px; background: linear-gradient(180deg, #c60b1e 33%, #ffc400 33%, #ffc400 67%, #c60b1e 67%); border-radius: 2px; }
   .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
@@ -101,27 +98,9 @@
 </head>
 <body>
 <div id="lockScreen">
-  <div class="lock-logo">Carlos <span>Console</span></div>
-  <div class="pin-dots">
-    <div class="pin-dot" id="d0"></div>
-    <div class="pin-dot" id="d1"></div>
-    <div class="pin-dot" id="d2"></div>
-    <div class="pin-dot" id="d3"></div>
-  </div>
-  <div class="pin-pad">
-    <button class="pin-btn" onclick="pinPress('1')">1</button>
-    <button class="pin-btn" onclick="pinPress('2')">2</button>
-    <button class="pin-btn" onclick="pinPress('3')">3</button>
-    <button class="pin-btn" onclick="pinPress('4')">4</button>
-    <button class="pin-btn" onclick="pinPress('5')">5</button>
-    <button class="pin-btn" onclick="pinPress('6')">6</button>
-    <button class="pin-btn" onclick="pinPress('7')">7</button>
-    <button class="pin-btn" onclick="pinPress('8')">8</button>
-    <button class="pin-btn" onclick="pinPress('9')">9</button>
-    <button class="pin-btn del" onclick="pinDel()">⌫</button>
-    <button class="pin-btn" onclick="pinPress('0')">0</button>
-    <div></div>
-  </div>
+  <div class="lock-time" id="lockTime">00:00</div>
+  <div class="lock-date" id="lockDate"></div>
+  <div class="lock-icon" id="lockIcon">🔒</div>
 </div>
 
 <div class="header">
@@ -226,26 +205,43 @@
 // PIN lock
 let pinEntry = '';
 const PIN = '0658';
-if (sessionStorage.getItem('unlocked') === '1') document.getElementById('lockScreen').style.display = 'none';
-function pinPress(n) {
-  if (pinEntry.length >= 4) return;
-  pinEntry += n;
-  document.getElementById('d' + (pinEntry.length - 1)).classList.add('filled');
-  if (pinEntry.length === 4) {
-    if (pinEntry === PIN) {
-      sessionStorage.setItem('unlocked', '1');
-      document.getElementById('lockScreen').classList.add('slide-up');
-    } else {
-      document.querySelectorAll('.pin-dot').forEach(d => { d.classList.remove('filled'); d.classList.add('error'); });
-      setTimeout(() => { document.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('error')); pinEntry = ''; }, 700);
+const lockEl = document.getElementById('lockScreen');
+const lockIcon = document.getElementById('lockIcon');
+
+if (sessionStorage.getItem('unlocked') === '1') lockEl.style.display = 'none';
+
+// Live clock
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('lockTime').textContent = h + ':' + m;
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('lockDate').textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate();
+}
+updateClock(); setInterval(updateClock, 10000);
+
+// Keyboard PIN
+document.addEventListener('keydown', e => {
+  if (lockEl.style.display === 'none' || lockEl.classList.contains('slide-up')) return;
+  if (!'0123456789'.includes(e.key)) return;
+  pinEntry += e.key;
+  if (pinEntry.length >= 4) {
+    if (pinEntry.slice(-4) === PIN) {
+      lockIcon.classList.add('unlocking');
+      lockIcon.textContent = '🔓';
+      setTimeout(() => {
+        sessionStorage.setItem('unlocked', '1');
+        lockEl.classList.add('slide-up');
+      }, 400);
+    } else if (pinEntry.length > 8) {
+      pinEntry = '';
+      lockIcon.classList.add('shake');
+      setTimeout(() => lockIcon.classList.remove('shake'), 400);
     }
   }
-}
-function pinDel() {
-  if (!pinEntry.length) return;
-  document.getElementById('d' + (pinEntry.length - 1)).classList.remove('filled');
-  pinEntry = pinEntry.slice(0, -1);
-}
+});
 
 const PERSONA = `You are Carlos Mendez (@carlosmendpoz), a 25-year-old Spanish guy from Madrid. You are a HUGE Galatasaray fan since 2008. You follow Turkish football obsessively — you know the clubs, the rivalries, the presidents, the journalists, the transfer drama. You react like someone who truly understands the subtext, not just the headline.
 
