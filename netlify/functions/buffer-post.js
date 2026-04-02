@@ -22,7 +22,7 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${bufferKey}`
       },
-      body: JSON.stringify({ query, variables: { input: { channelId, text, schedulingType: 'queue', mode: 'auto' } } })
+      body: JSON.stringify({ query, variables: { input: { channelId, text, schedulingType: 'automatic', mode: 'shareNow' } } })
     });
 
     const data = await res.json();
