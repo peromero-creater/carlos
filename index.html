@@ -19,6 +19,19 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+  #lockScreen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+  #lockScreen.slide-up { transform: translateY(-100%); pointer-events: none; }
+  .lock-logo { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .lock-logo span { color: var(--accent2); }
+  .pin-dots { display: flex; gap: 16px; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); background: transparent; transition: all 0.15s; }
+  .pin-dot.filled { background: var(--accent2); border-color: var(--accent2); }
+  .pin-dot.error { background: var(--accent); border-color: var(--accent); }
+  .pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .pin-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; width: 72px; height: 72px; cursor: pointer; transition: all 0.1s; display: flex; align-items: center; justify-content: center; }
+  .pin-btn:hover { background: var(--surface2); border-color: var(--accent2); }
+  .pin-btn:active { transform: scale(0.94); }
+  .pin-btn.del { font-size: 16px; color: var(--muted); }
   .header { border-bottom: 1px solid var(--border); padding: 18px 40px; display: flex; align-items: center; gap: 16px; }
   .flag-bar { width: 4px; height: 36px; background: linear-gradient(180deg, #c60b1e 33%, #ffc400 33%, #ffc400 67%, #c60b1e 67%); border-radius: 2px; }
   .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
@@ -87,6 +100,30 @@
 </style>
 </head>
 <body>
+<div id="lockScreen">
+  <div class="lock-logo">Carlos <span>Console</span></div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pinPress('1')">1</button>
+    <button class="pin-btn" onclick="pinPress('2')">2</button>
+    <button class="pin-btn" onclick="pinPress('3')">3</button>
+    <button class="pin-btn" onclick="pinPress('4')">4</button>
+    <button class="pin-btn" onclick="pinPress('5')">5</button>
+    <button class="pin-btn" onclick="pinPress('6')">6</button>
+    <button class="pin-btn" onclick="pinPress('7')">7</button>
+    <button class="pin-btn" onclick="pinPress('8')">8</button>
+    <button class="pin-btn" onclick="pinPress('9')">9</button>
+    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <div></div>
+  </div>
+</div>
+
 <div class="header">
   <div class="flag-bar"></div>
   <h1>Carlos <span>Console</span></h1>
@@ -186,6 +223,30 @@
 </div>
 
 <script>
+// PIN lock
+let pinEntry = '';
+const PIN = '0658';
+if (sessionStorage.getItem('unlocked') === '1') document.getElementById('lockScreen').style.display = 'none';
+function pinPress(n) {
+  if (pinEntry.length >= 4) return;
+  pinEntry += n;
+  document.getElementById('d' + (pinEntry.length - 1)).classList.add('filled');
+  if (pinEntry.length === 4) {
+    if (pinEntry === PIN) {
+      sessionStorage.setItem('unlocked', '1');
+      document.getElementById('lockScreen').classList.add('slide-up');
+    } else {
+      document.querySelectorAll('.pin-dot').forEach(d => { d.classList.remove('filled'); d.classList.add('error'); });
+      setTimeout(() => { document.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('error')); pinEntry = ''; }, 700);
+    }
+  }
+}
+function pinDel() {
+  if (!pinEntry.length) return;
+  document.getElementById('d' + (pinEntry.length - 1)).classList.remove('filled');
+  pinEntry = pinEntry.slice(0, -1);
+}
+
 const PERSONA = `You are Carlos Mendez (@carlosmendpoz), a 25-year-old Spanish guy from Madrid. You are a HUGE Galatasaray fan since 2008. You follow Turkish football obsessively — you know the clubs, the rivalries, the presidents, the journalists, the transfer drama. You react like someone who truly understands the subtext, not just the headline.
 
 CRITICAL RULE: When football context is provided, you MUST use it to make a specific, clever reaction. Never be generic. If the tweet is from a Fenerbahçe fan, acknowledge the rivalry angle. If it involves a club president or journalist with a known agenda, call it out subtly. Show you know more than a casual observer would.
