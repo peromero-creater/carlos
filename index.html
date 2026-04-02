@@ -19,15 +19,13 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
-  #lockScreen { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: transform 0.7s cubic-bezier(0.4,0,0.2,1); background: url('https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=1600&q=80') center/cover no-repeat; }
-  #lockScreen::before { content:''; position:absolute; inset:0; background: rgba(0,0,0,0.45); backdrop-filter: blur(2px); }
+  #lockScreen { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: transform 0.7s cubic-bezier(0.4,0,0.2,1); background: linear-gradient(135deg, #0a0a0f 0%, #13131a 50%, #0d0d14 100%); }
   #lockScreen.slide-up { transform: translateY(-100%); pointer-events: none; }
-  #lockScreen > * { position: relative; z-index: 1; }
-  .lock-time { font-size: 86px; font-weight: 200; color: #fff; letter-spacing: -4px; line-height: 1; text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
-  .lock-date { font-size: 16px; color: rgba(255,255,255,0.8); font-weight: 400; letter-spacing: 0.5px; margin-bottom: 28px; }
-  .lock-icon { font-size: 42px; opacity: 0.9; transition: all 0.2s; user-select: none; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4)); }
-  .lock-icon.shake { animation: shake 0.4s; }
-  .lock-icon.unlocking { transform: scale(1.2); opacity: 1; filter: drop-shadow(0 0 16px #f5a623); }
+  .lock-time { font-size: 86px; font-weight: 200; color: #fff; letter-spacing: -4px; line-height: 1; }
+  .lock-date { font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 400; letter-spacing: 0.5px; margin-bottom: 28px; }
+  .lock-icon img { width: 64px; opacity: 0.85; transition: all 0.3s; filter: brightness(0) invert(1); }
+  .lock-icon.shake img { animation: shake 0.4s; }
+  .lock-icon.unlocking img { transform: scale(1.15); opacity: 1; filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(5deg); }
   @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
   .header { border-bottom: 1px solid var(--border); padding: 18px 40px; display: flex; align-items: center; gap: 16px; }
   .flag-bar { width: 4px; height: 36px; background: linear-gradient(180deg, #c60b1e 33%, #ffc400 33%, #ffc400 67%, #c60b1e 67%); border-radius: 2px; }
@@ -100,7 +98,7 @@
 <div id="lockScreen">
   <div class="lock-time" id="lockTime">00:00</div>
   <div class="lock-date" id="lockDate"></div>
-  <div class="lock-icon" id="lockIcon">🔒</div>
+  <div class="lock-icon" id="lockIcon"><img src="lock.avif" alt="lock" /></div>
 </div>
 
 <div class="header">
@@ -230,7 +228,6 @@ document.addEventListener('keydown', e => {
   if (pinEntry.length >= 4) {
     if (pinEntry.slice(-4) === PIN) {
       lockIcon.classList.add('unlocking');
-      lockIcon.textContent = '🔓';
       setTimeout(() => {
         sessionStorage.setItem('unlocked', '1');
         lockEl.classList.add('slide-up');
