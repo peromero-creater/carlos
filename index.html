@@ -186,7 +186,7 @@ Rules:
 - Varied openers — never start the same way twice
 - Only output the tweet text. Nothing else.`;
 
-let currentTweet = '', selectedTone = 'passionate', isEditing = false, history = [];
+let currentTweet = '', currentTweetUrl = '', selectedTone = 'passionate', isEditing = false, history = [];
 
 // Load saved keys on startup
 window.addEventListener('load', () => {
@@ -310,6 +310,7 @@ async function generateTweet() {
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
     currentTweet = data.content[0].text.trim().replace(/^["']|["']$/g, '');
+    currentTweetUrl = tweetInput.startsWith('https://') ? tweetInput.trim() : '';
     display.className = 'output-area'; display.textContent = currentTweet;
     ['editBtn','copyBtn','postBtn'].forEach(id => document.getElementById(id).disabled = false);
     updateCharCount(); showStatus('', ''); addToHistory(tweetInput, currentTweet);
@@ -337,7 +338,7 @@ async function postToBuffer() {
     const res = await fetch('/.netlify/functions/buffer-post', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: currentTweet, channelId: '69cab077af47dacb696e81c1', bufferKey })
+      body: JSON.stringify({ text: currentTweetUrl ? `${currentTweet} ${currentTweetUrl}` : currentTweet, channelId: '69cab077af47dacb696e81c1', bufferKey })
     });
     const rawText = await res.text();
     console.log('Buffer raw response:', rawText);
