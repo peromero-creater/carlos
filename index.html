@@ -99,7 +99,11 @@
     <div class="panel-title">📥 Input</div>
     <div class="field">
       <label>Tweet URL or text to react to</label>
-      <textarea id="tweetInput" placeholder="Paste tweet URL or text here..."></textarea>
+      <textarea id="tweetInput" placeholder="Paste tweet URL or text here..." oninput="document.getElementById('fetchedPreview').style.display='none'"></textarea>
+      <div id="fetchedPreview" style="display:none;margin-top:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">👁 Claude sees this</div>
+        <div id="fetchedText" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text);line-height:1.6;"></div>
+      </div>
     </div>
     <div class="field">
       <label>Context hints (optional)</label>
@@ -317,7 +321,11 @@ async function generateTweet() {
           body: JSON.stringify({ url: currentTweetUrl })
         });
         const fetchData = await fetchRes.json();
-        if (fetchData.text) tweetContent = `${fetchData.author ? fetchData.author + ': ' : ''}${fetchData.text}`;
+        if (fetchData.text) {
+          tweetContent = `${fetchData.author ? fetchData.author + ': ' : ''}${fetchData.text}`;
+          document.getElementById('fetchedText').textContent = tweetContent;
+          document.getElementById('fetchedPreview').style.display = 'block';
+        }
       } catch(e) { /* fallback to raw URL */ }
     }
 
