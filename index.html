@@ -53,6 +53,11 @@
   .action-btn.post-btn:hover { background: #27ae60; }
   .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .char-count { text-align: right; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .options-area { display: none; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .option-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.6; cursor: pointer; transition: all 0.15s; }
+  .option-card:hover { border-color: var(--accent2); background: var(--surface2); }
+  .option-card.selected { border-color: var(--accent2); background: var(--surface2); }
+  .option-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
   .char-count.over { color: var(--accent); }
   .settings-section { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--border); }
   .toggle-settings { background: none; border: none; color: var(--muted); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 8px; }
@@ -153,6 +158,7 @@
     <div class="panel-title">✦ Output</div>
     <div class="field">
       <label>Generated Tweet</label>
+      <div class="options-area" id="optionsArea"></div>
       <div class="output-area placeholder" id="outputDisplay">Tweet will appear here...</div>
       <textarea class="edit-output" id="editableOutput" oninput="updateCharCount()"></textarea>
       <div class="char-count" id="charCount"></div>
@@ -184,7 +190,7 @@ Rules:
 - 1-2 emojis max
 - No hashtags unless it fits perfectly naturally
 - Varied openers — never start the same way twice
-- Only output the tweet text. Nothing else.`;
+- Return a JSON array of exactly 3 tweet options with different angles/styles. Format: ["option1","option2","option3"]. Only output the JSON array, nothing else.`;
 
 let currentTweet = '', currentTweetUrl = '', selectedTone = 'passionate', isEditing = false, history = [];
 
@@ -293,29 +299,74 @@ async function generateTweet() {
   const btn = document.getElementById('generateBtn');
   btn.disabled = true; btn.textContent = '⟳ Generating...';
   const display = document.getElementById('outputDisplay');
-  display.className = 'output-area loading'; display.textContent = 'Carlos is thinking...';
+  const optionsArea = document.getElementById('optionsArea');
+  display.className = 'output-area loading'; display.textContent = 'Fetching tweet...';
+  display.style.display = 'block'; optionsArea.style.display = 'none';
   document.getElementById('charCount').textContent = '';
+  ['editBtn','copyBtn','postBtn'].forEach(id => document.getElementById(id).disabled = true);
 
   try {
+    // Step 1: fetch tweet content if URL
+    let tweetContent = tweetInput;
+    currentTweetUrl = tweetInput.startsWith('https://') ? tweetInput.trim() : '';
+    if (currentTweetUrl) {
+      display.textContent = 'Reading tweet...';
+      try {
+        const fetchRes = await fetch('/.netlify/functions/fetch-tweet', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: currentTweetUrl })
+        });
+        const fetchData = await fetchRes.json();
+        if (fetchData.text) tweetContent = `${fetchData.author ? fetchData.author + ': ' : ''}${fetchData.text}`;
+      } catch(e) { /* fallback to raw URL */ }
+    }
+
+    // Step 2: generate 3 options
+    display.textContent = 'Carlos is thinking...';
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 200,
+        max_tokens: 600,
         system: PERSONA,
-        messages: [{ role: 'user', content: `Tweet/news: "${tweetInput}"\n${hints ? 'Context: ' + hints : ''}\nTone: ${selectedTone}. Language: ${lang}.` }]
+        messages: [{ role: 'user', content: `Tweet/news: "${tweetContent}"\n${hints ? 'Context: ' + hints : ''}\nTone: ${selectedTone}. Language: ${lang}.` }]
       })
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
-    currentTweet = data.content[0].text.trim().replace(/^["']|["']$/g, '');
-    currentTweetUrl = tweetInput.startsWith('https://') ? tweetInput.trim() : '';
-    display.className = 'output-area'; display.textContent = currentTweet;
+
+    let options;
+    try {
+      const raw = data.content[0].text.trim();
+      options = JSON.parse(raw);
+    } catch(e) {
+      options = [data.content[0].text.trim().replace(/^["']|["']$/g, '')];
+    }
+
+    if (options.length === 1) {
+      currentTweet = options[0];
+      display.className = 'output-area'; display.textContent = currentTweet;
+      display.style.display = 'block'; optionsArea.style.display = 'none';
+    } else {
+      // Show choices
+      display.style.display = 'none';
+      optionsArea.style.display = 'flex';
+      optionsArea.innerHTML = options.map((opt, i) => `
+        <div class="option-card" onclick="selectOption(this, ${i})" data-index="${i}">
+          <div class="option-label">Option ${i + 1}</div>
+          ${opt}
+        </div>`).join('');
+      window._tweetOptions = options;
+      currentTweet = options[0];
+      optionsArea.querySelector('.option-card').classList.add('selected');
+    }
+
     ['editBtn','copyBtn','postBtn'].forEach(id => document.getElementById(id).disabled = false);
     updateCharCount(); showStatus('', ''); addToHistory(tweetInput, currentTweet);
   } catch(err) {
     display.className = 'output-area placeholder'; display.textContent = 'Error generating tweet.';
+    display.style.display = 'block'; optionsArea.style.display = 'none';
     showStatus('Error: ' + err.message, 'error');
   }
   btn.disabled = false; btn.textContent = '✦ Generate Tweet';
@@ -351,6 +402,13 @@ async function postToBuffer() {
   } catch(err) { showStatus('Post failed: ' + err.message, 'error'); }
 
   btn.disabled = false; btn.textContent = '↑ Post Now';
+}
+
+function selectOption(el, i) {
+  document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  currentTweet = window._tweetOptions[i];
+  updateCharCount();
 }
 
 function copyTweet() {
