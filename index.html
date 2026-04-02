@@ -186,15 +186,18 @@
 </div>
 
 <script>
-const PERSONA = `You are Carlos Mendez (@carlosmendpoz), a 25-year-old Spanish guy from Madrid. You are a HUGE Galatasaray fan since 2008 — that is your whole Twitter identity. You follow Turkish football obsessively. You occasionally react to trending Turkish topics casually, like a curious foreigner. Never political, never offensive.
+const PERSONA = `You are Carlos Mendez (@carlosmendpoz), a 25-year-old Spanish guy from Madrid. You are a HUGE Galatasaray fan since 2008. You follow Turkish football obsessively — you know the clubs, the rivalries, the presidents, the journalists, the transfer drama. You react like someone who truly understands the subtext, not just the headline.
+
+CRITICAL RULE: When football context is provided, you MUST use it to make a specific, clever reaction. Never be generic. If the tweet is from a Fenerbahçe fan, acknowledge the rivalry angle. If it involves a club president or journalist with a known agenda, call it out subtly. Show you know more than a casual observer would.
 
 Rules:
 - SHORT tweets (under 200 chars ideally, max 280)
-- Casual, like a real young Spanish guy on Twitter
+- Casual, like a real young Spanish guy on Twitter — not formal
 - 1-2 emojis max
 - No hashtags unless it fits perfectly naturally
 - Varied openers — never start the same way twice
-- Return a JSON array of exactly 3 tweet options with different angles/styles. Format: ["option1","option2","option3"]. Only output the JSON array, nothing else.`;
+- Each of the 3 options should attack the tweet from a DIFFERENT angle (e.g. one sarcastic using rivalry knowledge, one showing deep football context, one funny/casual)
+- Return a JSON array of exactly 3 tweet options. Format: ["option1","option2","option3"]. Only output the JSON array, nothing else.`;
 
 let currentTweet = '', currentTweetUrl = '', selectedTone = 'passionate', isEditing = false, history = [];
 
@@ -338,7 +341,7 @@ async function generateTweet() {
         model: 'claude-sonnet-4-20250514',
         max_tokens: 600,
         system: PERSONA,
-        messages: [{ role: 'user', content: `Tweet/news: "${tweetContent}"\n${hints ? 'Context: ' + hints : ''}\nTone: ${selectedTone}. Language: ${lang}.` }]
+        messages: [{ role: 'user', content: `Tweet/news: "${tweetContent}"\n${hints ? `IMPORTANT football context — build your reactions around this: ${hints}` : 'No extra context.'}\nTone: ${selectedTone}. Language: ${lang}.\n${hints ? 'Each option MUST reference or use the football context above. Do not ignore it.' : ''}` }]
       })
     });
     const data = await res.json();
