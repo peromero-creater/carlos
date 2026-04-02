@@ -19,14 +19,6 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
-  #lockScreen { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: transform 0.7s cubic-bezier(0.4,0,0.2,1); background: linear-gradient(135deg, #0a0a0f 0%, #13131a 50%, #0d0d14 100%); }
-  #lockScreen.slide-up { transform: translateY(-100%); pointer-events: none; }
-  .lock-time { font-size: 86px; font-weight: 200; color: #fff; letter-spacing: -4px; line-height: 1; }
-  .lock-date { font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 400; letter-spacing: 0.5px; margin-bottom: 28px; }
-  .lock-icon img { width: 64px; opacity: 0.85; transition: all 0.3s; filter: brightness(0) invert(1); }
-  .lock-icon.shake img { animation: shake 0.4s; }
-  .lock-icon.unlocking img { transform: scale(1.15); opacity: 1; filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(5deg); }
-  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
   .header { border-bottom: 1px solid var(--border); padding: 18px 40px; display: flex; align-items: center; gap: 16px; }
   .flag-bar { width: 4px; height: 36px; background: linear-gradient(180deg, #c60b1e 33%, #ffc400 33%, #ffc400 67%, #c60b1e 67%); border-radius: 2px; }
   .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
@@ -95,12 +87,6 @@
 </style>
 </head>
 <body>
-<div id="lockScreen">
-  <div class="lock-time" id="lockTime">00:00</div>
-  <div class="lock-date" id="lockDate"></div>
-  <div class="lock-icon" id="lockIcon"><img src="lock.avif" alt="lock" /></div>
-</div>
-
 <div class="header">
   <div class="flag-bar"></div>
   <h1>Carlos <span>Console</span></h1>
@@ -200,45 +186,6 @@
 </div>
 
 <script>
-// PIN lock
-let pinEntry = '';
-const PIN = '0658';
-const lockEl = document.getElementById('lockScreen');
-const lockIcon = document.getElementById('lockIcon');
-
-if (sessionStorage.getItem('unlocked') === '1') lockEl.style.display = 'none';
-
-// Live clock
-function updateClock() {
-  const now = new Date();
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('lockTime').textContent = h + ':' + m;
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('lockDate').textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate();
-}
-updateClock(); setInterval(updateClock, 10000);
-
-// Keyboard PIN
-document.addEventListener('keydown', e => {
-  if (lockEl.style.display === 'none' || lockEl.classList.contains('slide-up')) return;
-  if (!'0123456789'.includes(e.key)) return;
-  pinEntry += e.key;
-  if (pinEntry.length >= 4) {
-    if (pinEntry.slice(-4) === PIN) {
-      lockIcon.classList.add('unlocking');
-      setTimeout(() => {
-        sessionStorage.setItem('unlocked', '1');
-        lockEl.classList.add('slide-up');
-      }, 400);
-    } else if (pinEntry.length > 8) {
-      pinEntry = '';
-      lockIcon.classList.add('shake');
-      setTimeout(() => lockIcon.classList.remove('shake'), 400);
-    }
-  }
-});
 
 const PERSONA = `You are Carlos Mendez (@carlosmendpoz), a 25-year-old Spanish guy from Madrid. You are a HUGE Galatasaray fan since 2008. You follow Turkish football obsessively — you know the clubs, the rivalries, the presidents, the journalists, the transfer drama. You react like someone who truly understands the subtext, not just the headline.
 
