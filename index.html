@@ -381,9 +381,108 @@
   }
   .hi-meta { font-size: 10px; color: var(--faint); display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; }
 
+  /* ── MODE TOGGLE ── */
+  .mode-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--stroke);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .mode-btn {
+    flex: 1;
+    background: var(--raised);
+    border: none;
+    color: var(--dim);
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    border-right: 1px solid var(--stroke);
+  }
+  .mode-btn:last-child { border-right: none; }
+  .mode-btn:hover { color: var(--text); }
+  .mode-btn.active { background: var(--lift); color: var(--text); }
+  .mode-btn.active.mode-reply { color: var(--flag-gold); }
+
+  /* ── GROK SHORTCUT (inside reply mode) ── */
+  .grok-shortcut {
+    display: none;
+    background: rgba(139,92,246,0.05);
+    border: 1px solid rgba(139,92,246,0.18);
+    border-radius: 8px;
+    padding: 10px 14px;
+    align-items: center;
+    gap: 10px;
+  }
+  .grok-shortcut.visible { display: flex; }
+  .grok-text {
+    flex: 1;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+    line-height: 1.5;
+  }
+  .grok-text em { font-style: normal; color: #8b5cf6; }
+  .grok-send-btn {
+    flex-shrink: 0;
+    background: #8b5cf6;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .grok-send-btn:hover { background: #7c3aed; }
+  .grok-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── REPLY BUTTON ── */
+  .action-btn.reply-btn {
+    color: var(--flag-gold);
+    border-color: rgba(255,196,0,0.2);
+    background: rgba(255,196,0,0.04);
+  }
+  .action-btn.reply-btn:hover:not(:disabled) {
+    border-color: rgba(255,196,0,0.5);
+    background: rgba(255,196,0,0.08);
+  }
+
   ::-webkit-scrollbar { width: 3px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--stroke2); border-radius: 2px; }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    .header { padding: 0 16px; height: 50px; gap: 10px; }
+    .header-title { font-size: 14px; }
+    .handle { display: none; }
+    .live-pill { font-size: 10px; padding: 3px 8px 3px 6px; }
+    .main {
+      grid-template-columns: 1fr;
+      height: auto;
+      min-height: calc(100vh - 50px);
+    }
+    .panel {
+      padding: 20px 16px;
+      border-right: none;
+      border-bottom: 1px solid var(--stroke);
+      gap: 16px;
+    }
+    .panel:last-child { border-bottom: none; }
+    .tweet-actions { grid-template-columns: 1fr 1fr; }
+    .generate-btn { font-size: 13px; padding: 13px; }
+    .output-area { min-height: 100px; font-size: 13px; padding: 14px; }
+    .edit-output { min-height: 100px; font-size: 13px; padding: 14px; }
+    textarea { min-height: 64px; }
+  }
 </style>
 </head>
 <body>
@@ -401,8 +500,13 @@
   <div class="panel">
     <div class="section-label">Input</div>
 
+    <div class="mode-toggle">
+      <button class="mode-btn active" onclick="setMode('comment', this)">Comment</button>
+      <button class="mode-btn" onclick="setMode('reply', this)">Reply</button>
+    </div>
+
     <div class="field">
-      <label>Tweet or URL</label>
+      <label id="inputLabel">Tweet or URL</label>
       <textarea id="tweetInput" placeholder="Paste tweet URL or text here..." oninput="document.getElementById('fetchedPreview').style.display='none';"></textarea>
       <div class="fetched-preview" id="fetchedPreview">
         <div class="fetched-label">Claude sees this</div>
@@ -416,6 +520,11 @@
     </div>
 
     <button class="generate-btn" id="generateBtn" onclick="generateTweet()">Generate</button>
+
+    <div class="grok-shortcut" id="grokShortcut">
+      <div class="grok-text"><em>@grok</em> detaylı bir şekilde bu postu açıkla?</div>
+      <button class="grok-send-btn" id="grokSendBtn" onclick="sendGrokReply()">Send</button>
+    </div>
 
     <div class="settings-section">
       <button class="toggle-settings" onclick="toggleSettings()">API Keys <span id="settingsArrow">▼</span></button>
@@ -458,11 +567,12 @@
       <textarea id="reviseNote" placeholder="e.g. make it more sarcastic, focus on the referee angle..." style="min-height:52px;"></textarea>
     </div>
 
-    <div class="tweet-actions">
+    <div class="tweet-actions" id="tweetActions">
       <button class="action-btn" id="editBtn" onclick="toggleEdit()" disabled>Edit</button>
       <button class="action-btn revise-btn" id="reviseBtn" onclick="reviseTweet()" disabled>↻ Revise</button>
       <button class="action-btn" id="copyBtn" onclick="copyTweet()" disabled>Copy</button>
       <button class="action-btn post-btn" id="postBtn" onclick="postToBuffer()" disabled>Post</button>
+      <button class="action-btn reply-btn" id="replyBtn" onclick="sendReply()" disabled style="display:none;">Reply</button>
     </div>
     <div id="statusMsg" class="status-msg"></div>
 
@@ -659,6 +769,38 @@ OUTPUT INSTRUCTION
 Return the comment only. Raw text. No quotes around it. No explanation of why you wrote it that way. No labels like "Comment:" before it. Just the comment exactly as Carlos would post it.`;
 
 let currentTweet = '', currentTweetUrl = '', isEditing = false, history = [], lastTweetContent = '', lastHints = '';
+let currentMode = 'comment'; // 'comment' | 'reply' | 'grok'
+
+function extractTweetId(url) {
+  const match = url.match(/status\/(\d+)/);
+  return match ? match[1] : null;
+}
+
+function setMode(mode, btn) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active', 'mode-reply'));
+  btn.classList.add('active');
+  if (mode === 'reply') btn.classList.add('mode-reply');
+
+  const inputLabel = document.getElementById('inputLabel');
+  const replyBtn = document.getElementById('replyBtn');
+  const postBtn = document.getElementById('postBtn');
+  const grokShortcut = document.getElementById('grokShortcut');
+
+  if (mode === 'comment') {
+    inputLabel.textContent = 'Tweet or URL';
+    document.getElementById('tweetInput').placeholder = 'Paste tweet URL or text here...';
+    replyBtn.style.display = 'none';
+    postBtn.style.display = '';
+    grokShortcut.classList.remove('visible');
+  } else if (mode === 'reply') {
+    inputLabel.textContent = 'Tweet URL to reply to';
+    document.getElementById('tweetInput').placeholder = 'Paste the tweet URL you want to reply to...';
+    replyBtn.style.display = '';
+    postBtn.style.display = 'none';
+    grokShortcut.classList.add('visible');
+  }
+}
 
 // Load saved keys on startup
 window.addEventListener('load', () => {
@@ -762,7 +904,7 @@ async function generateTweet() {
   display.className = 'output-area loading'; display.textContent = 'Fetching tweet...';
   display.style.display = 'block'; optionsArea.style.display = 'none';
   document.getElementById('charCount').textContent = '';
-  ['editBtn','reviseBtn','copyBtn','postBtn'].forEach(id => document.getElementById(id).disabled = true);
+  ['editBtn','reviseBtn','copyBtn','postBtn','replyBtn'].forEach(id => document.getElementById(id).disabled = true);
 
   try {
     // Step 1: fetch tweet content if URL
@@ -805,7 +947,12 @@ async function generateTweet() {
     display.className = 'output-area'; display.textContent = currentTweet;
     display.style.display = 'block'; optionsArea.style.display = 'none';
 
-    ['editBtn','reviseBtn','copyBtn','postBtn'].forEach(id => document.getElementById(id).disabled = false);
+    ['editBtn','reviseBtn','copyBtn'].forEach(id => document.getElementById(id).disabled = false);
+    if (currentMode === 'reply') {
+      document.getElementById('replyBtn').disabled = false;
+    } else {
+      document.getElementById('postBtn').disabled = false;
+    }
     document.getElementById('reviseNoteWrap').classList.add('visible');
     updateCharCount(); showStatus('', ''); addToHistory(tweetInput, currentTweet);
   } catch(err) {
@@ -813,7 +960,7 @@ async function generateTweet() {
     display.style.display = 'block'; optionsArea.style.display = 'none';
     showStatus('Error: ' + err.message, 'error');
   }
-  btn.disabled = false; btn.textContent = '✦ Generate Tweet';
+  btn.disabled = false; btn.textContent = 'Generate';
 }
 
 async function reviseTweet() {
@@ -901,6 +1048,52 @@ async function postToBuffer() {
   } catch(err) { showStatus('Post failed: ' + err.message, 'error'); }
 
   btn.disabled = false; btn.textContent = '↑ Post Now';
+}
+
+async function sendReply() {
+  if (!currentTweet) { showStatus('No tweet to reply with.', 'error'); return; }
+  if (currentTweet.length > 280) { showStatus('Tweet over 280 chars. Edit it first.', 'error'); return; }
+
+  const tweetId = extractTweetId(currentTweetUrl);
+  if (!tweetId) { showStatus('Need a valid tweet URL to reply to.', 'error'); return; }
+
+  const btn = document.getElementById('replyBtn');
+  btn.disabled = true; btn.textContent = 'Replying...';
+
+  try {
+    const res = await fetch('/.netlify/functions/tweet-reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: currentTweet, tweetId })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    showStatus(`✓ Replied! Tweet ID: ${data.id}`, 'success');
+  } catch(err) { showStatus('Reply failed: ' + err.message, 'error'); }
+
+  btn.disabled = false; btn.textContent = 'Reply';
+}
+
+async function sendGrokReply() {
+  const url = document.getElementById('tweetInput').value.trim();
+  const tweetId = extractTweetId(url);
+  if (!tweetId) { showStatus('Paste a valid tweet URL first.', 'error'); return; }
+
+  const btn = document.getElementById('grokSendBtn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+
+  try {
+    const res = await fetch('/.netlify/functions/tweet-reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: '@grok detaylı bir şekilde bu postu açıkla?', tweetId })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    showStatus(`✓ @grok reply sent! Tweet ID: ${data.id}`, 'success');
+  } catch(err) { showStatus('@grok reply failed: ' + err.message, 'error'); }
+
+  btn.disabled = false; btn.textContent = 'Send as Reply';
 }
 
 function selectOption(el, i) {
