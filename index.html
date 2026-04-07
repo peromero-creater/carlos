@@ -1087,50 +1087,22 @@ async function postToBuffer() {
   btn.disabled = false; btn.textContent = '↑ Post Now';
 }
 
-async function sendReply() {
+function sendReply() {
   if (!currentTweet) { showStatus('No tweet to reply with.', 'error'); return; }
-  if (currentTweet.length > 280) { showStatus('Tweet over 280 chars. Edit it first.', 'error'); return; }
+  if (!currentTweetUrl) { showStatus('Need a tweet URL to reply to.', 'error'); return; }
 
-  const tweetId = extractTweetId(currentTweetUrl);
-  if (!tweetId) { showStatus('Need a valid tweet URL to reply to.', 'error'); return; }
-
-  const btn = document.getElementById('replyBtn');
-  btn.disabled = true; btn.textContent = 'Replying...';
-
-  try {
-    const res = await fetch('/.netlify/functions/tweet-reply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: currentTweet, tweetId })
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    showStatus(`✓ Replied! Tweet ID: ${data.id}`, 'success');
-  } catch(err) { showStatus('Reply failed: ' + err.message, 'error'); }
-
-  btn.disabled = false; btn.textContent = 'Reply';
+  navigator.clipboard.writeText(currentTweet);
+  window.open(currentTweetUrl, '_blank');
+  showStatus('✓ Reply copied — paste it in the reply box!', 'success');
 }
 
-async function sendGrokReply() {
+function sendGrokReply() {
   const url = document.getElementById('tweetInput').value.trim();
-  const tweetId = extractTweetId(url);
-  if (!tweetId) { showStatus('Paste a valid tweet URL first.', 'error'); return; }
+  if (!url || !url.includes('/status/')) { showStatus('Paste a valid tweet URL first.', 'error'); return; }
 
-  const btn = document.getElementById('grokSendBtn');
-  btn.disabled = true; btn.textContent = 'Sending...';
-
-  try {
-    const res = await fetch('/.netlify/functions/tweet-reply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: '@grok detaylı bir şekilde bu postu açıkla?', tweetId })
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    showStatus(`✓ @grok reply sent! Tweet ID: ${data.id}`, 'success');
-  } catch(err) { showStatus('@grok reply failed: ' + err.message, 'error'); }
-
-  btn.disabled = false; btn.textContent = 'Send as Reply';
+  navigator.clipboard.writeText('@grok detaylı bir şekilde bu postu açıkla?');
+  window.open(url, '_blank');
+  showStatus('✓ @grok text copied — paste it in the reply box!', 'success');
 }
 
 function selectOption(el, i) {
