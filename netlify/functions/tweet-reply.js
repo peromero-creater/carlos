@@ -29,7 +29,8 @@ exports.handler = async (event) => {
   });
 
   try {
-    const tweet = await client.v2.tweet(text, {
+    const tweet = await client.v2.tweet({
+      text,
       reply: { in_reply_to_tweet_id: tweetId }
     });
     return {
