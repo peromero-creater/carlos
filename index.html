@@ -1091,18 +1091,24 @@ function sendReply() {
   if (!currentTweet) { showStatus('No tweet to reply with.', 'error'); return; }
   if (!currentTweetUrl) { showStatus('Need a tweet URL to reply to.', 'error'); return; }
 
-  navigator.clipboard.writeText(currentTweet);
-  window.open(currentTweetUrl, '_blank');
-  showStatus('✓ Reply copied — paste it in the reply box!', 'success');
+  const tweetId = extractTweetId(currentTweetUrl);
+  if (!tweetId) { showStatus('Could not extract tweet ID.', 'error'); return; }
+
+  const intentUrl = `https://x.com/intent/tweet?in_reply_to=${tweetId}&text=${encodeURIComponent(currentTweet)}`;
+  window.open(intentUrl, '_blank');
+  showStatus('✓ Reply ready — just hit Tweet!', 'success');
 }
 
 function sendGrokReply() {
   const url = document.getElementById('tweetInput').value.trim();
   if (!url || !url.includes('/status/')) { showStatus('Paste a valid tweet URL first.', 'error'); return; }
 
-  navigator.clipboard.writeText('@grok detaylı bir şekilde bu postu açıkla?');
-  window.open(url, '_blank');
-  showStatus('✓ @grok text copied — paste it in the reply box!', 'success');
+  const tweetId = extractTweetId(url);
+  if (!tweetId) { showStatus('Could not extract tweet ID.', 'error'); return; }
+
+  const intentUrl = `https://x.com/intent/tweet?in_reply_to=${tweetId}&text=${encodeURIComponent('@grok detaylı bir şekilde bu postu açıkla?')}`;
+  window.open(intentUrl, '_blank');
+  showStatus('✓ @grok reply ready — just hit Tweet!', 'success');
 }
 
 function selectOption(el, i) {
