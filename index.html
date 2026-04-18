@@ -1194,7 +1194,11 @@ async function postPickToBuffer(pick, bufferKey) {
   let data;
   try { data = JSON.parse(raw); } catch { throw new Error('Non-JSON: ' + raw.substring(0, 120)); }
   if (data.error) throw new Error(data.error);
-  if (data.errors?.length) throw new Error(data.errors[0].message);
+  if (data.errors?.length) {
+    const msg = data.errors[0].message;
+    const valid = data._validSchedulingTypes;
+    throw new Error(msg + (valid?.length ? ` | Valid SchedulingType values: ${valid.join(', ')}` : ''));
+  }
   return data;
 }
 
