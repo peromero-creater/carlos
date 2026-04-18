@@ -15,10 +15,11 @@ exports.handler = async (event) => {
 
   const query = `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id status dueAt } } } }`;
 
-  // Default to 'manual' for scheduled posts (one of the standard Buffer enum values).
-  // Caller can override via schedulingType in body if needed.
+  // Buffer's SchedulingType enum only has 'automatic' and 'notification'.
+  // 'notification' = Instagram-reminder style (not what we want).
+  // 'automatic' + mode: 'schedule' + explicit scheduledAt lets Buffer honor the exact time.
   const input = scheduledAt
-    ? { channelId, text, schedulingType: schedulingType || 'manual', mode: 'schedule', scheduledAt }
+    ? { channelId, text, schedulingType: schedulingType || 'automatic', mode: 'schedule', scheduledAt }
     : { channelId, text, schedulingType: schedulingType || 'automatic', mode: 'shareNow' };
 
   try {
