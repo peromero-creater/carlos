@@ -16,7 +16,7 @@ exports.handler = async (event) => {
   const query = `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id status dueAt } } } }`;
 
   const input = scheduledAt
-    ? { channelId, text, mode: 'schedule', scheduledAt }
+    ? { channelId, text, schedulingType: 'direct', mode: 'schedule', scheduledAt }
     : { channelId, text, schedulingType: 'automatic', mode: 'shareNow' };
 
   try {
