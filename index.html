@@ -1032,8 +1032,8 @@ function maybeHandleScoutHash() {
     showScout();
     return;
   }
-  // Clear hash so refresh doesn't re-run.
-  history.replaceState(null, '', location.pathname + location.search);
+  // Clear hash so refresh doesn't re-run. Use window.history because `history` is shadowed by the local array.
+  window.history.replaceState(null, '', location.pathname + location.search);
   runScoutCuration(candidates);
 }
 
