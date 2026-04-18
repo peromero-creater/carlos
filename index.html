@@ -1052,15 +1052,15 @@ function setScoutBadge(text) {
   document.getElementById('scoutBadge').textContent = text;
 }
 
-// Compute next Unix-epoch-seconds for a given Turkey hour. If hour already passed today, schedule for tomorrow.
-function nextTurkeySlotEpoch(turkeyHour) {
+// Compute next ISO timestamp for a given Turkey hour. If hour already passed today, schedule for tomorrow.
+function nextTurkeySlotISO(turkeyHour) {
   const utcHour = (turkeyHour + 24 - 3) % 24; // Turkey = UTC+3
   const now = new Date();
   let target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), utcHour, 0, 0));
   if (target.getTime() <= now.getTime() + 60 * 1000) {
     target.setUTCDate(target.getUTCDate() + 1);
   }
-  return Math.floor(target.getTime() / 1000);
+  return target.toISOString();
 }
 
 async function runScoutCuration(candidates) {
@@ -1137,7 +1137,7 @@ Exactly 5 picks. Indices must be valid (0 to ${candidates.length - 1}). No dupli
       kind: slot.kind,
       reply: p.reply,
       candidate: cand,
-      scheduledAt: nextTurkeySlotEpoch(slot.hour)
+      scheduledAt: nextTurkeySlotISO(slot.hour)
     };
   });
 
@@ -1187,7 +1187,7 @@ async function postPickToBuffer(pick, bufferKey) {
       text,
       channelId: SCOUT_CHANNEL_ID,
       bufferKey,
-      scheduledAt: String(pick.scheduledAt)
+      scheduledAt: pick.scheduledAt
     })
   });
   const raw = await res.text();
