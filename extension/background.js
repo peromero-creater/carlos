@@ -49,17 +49,143 @@ NEVER:
 
 Return the comment only. Raw text. No quotes. No labels.`;
 
+// ─── SCOUT TARGETS — accounts + the Galatasaray hashtag (live) ───
+const SCOUT_TARGETS = [
+  'https://x.com/Tartismalar',
+  'https://x.com/tinercimayki',
+  'https://x.com/Maestro1O',
+  'https://x.com/yagosabuncuoglu',
+  'https://x.com/search?q=%23Galatasaray&src=typed_query&f=live'
+];
+
+// ─── DAILY ALARM — fallback auto-run at 14:00 Turkey time (11:00 UTC) ───
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.alarms.create('dailyScout', { when: nextDailyFireUTC(11), periodInMinutes: 24 * 60 });
+});
+
+function nextDailyFireUTC(targetUtcHour) {
+  const now = new Date();
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), targetUtcHour, 0, 0));
+  if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1);
+  return next.getTime();
+}
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name !== 'dailyScout') return;
+  const { lastScoutRunISO } = await chrome.storage.local.get('lastScoutRunISO');
+  if (lastScoutRunISO) {
+    const last = new Date(lastScoutRunISO);
+    const sameDay = last.toDateString() === new Date().toDateString();
+    if (sameDay) return; // already ran today
+  }
+  runScout({ source: 'alarm' }).catch(e => console.error('alarm scout failed', e));
+});
+
+// ─── MESSAGES — popup + content scripts ───
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'generateReply') {
     generateCarlosReply(msg.tweetText, msg.hint || '').then(sendResponse);
-    return true; // keep channel open for async
+    return true;
   }
   if (msg.type === 'generateGrok') {
     sendResponse({ reply: '@grok detaylı bir şekilde bu postu açıkla?' });
     return false;
   }
+  if (msg.type === 'runScout') {
+    runScout({ source: 'popup' }).then(sendResponse).catch(err => sendResponse({ error: err.message }));
+    return true;
+  }
+  if (msg.type === 'getScoutStatus') {
+    chrome.storage.local.get(['scoutStatus', 'lastScoutRunISO']).then(sendResponse);
+    return true;
+  }
 });
 
+// ─── SCOUT ORCHESTRATOR ───
+async function runScout({ source }) {
+  const { dashboardUrl } = await chrome.storage.sync.get('dashboardUrl');
+  if (!dashboardUrl) {
+    await setStatus('error', 'Set Dashboard URL in popup first.');
+    return { error: 'No dashboard URL configured.' };
+  }
+
+  await setStatus('running', `Scout starting (${source})...`);
+
+  const allCandidates = [];
+  for (let i = 0; i < SCOUT_TARGETS.length; i++) {
+    const url = SCOUT_TARGETS[i];
+    await setStatus('running', `Scraping ${i + 1}/${SCOUT_TARGETS.length}...`);
+    try {
+      const found = await scrapeTab(url);
+      allCandidates.push(...found);
+    } catch (err) {
+      console.warn('scrape failed for', url, err);
+    }
+  }
+
+  // Dedupe by URL, sort by score, cap at 30.
+  const byUrl = new Map();
+  for (const c of allCandidates) {
+    const prev = byUrl.get(c.url);
+    if (!prev || c.score > prev.score) byUrl.set(c.url, c);
+  }
+  const merged = Array.from(byUrl.values()).sort((a, b) => b.score - a.score).slice(0, 30);
+
+  if (merged.length < 5) {
+    await setStatus('error', `Only found ${merged.length} candidates. Try again later.`);
+    return { error: 'Not enough candidates', count: merged.length };
+  }
+
+  await setStatus('running', `Found ${merged.length}. Opening dashboard for curation...`);
+  await chrome.storage.local.set({ lastScoutRunISO: new Date().toISOString() });
+
+  // Hand off to dashboard via URL hash. Dashboard runs Claude + auto-posts + shows pending.
+  const payload = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(merged)))));
+  const target = dashboardUrl.replace(/\/$/, '') + '/#scout=' + payload;
+  await chrome.tabs.create({ url: target, active: true });
+
+  await setStatus('done', `Sent ${merged.length} candidates to dashboard.`);
+  return { ok: true, count: merged.length };
+}
+
+async function scrapeTab(url) {
+  const tab = await chrome.tabs.create({ url, active: false });
+  try {
+    await waitForTabComplete(tab.id);
+    // give X extra time to render tweets after 'complete'
+    await new Promise(r => setTimeout(r, 2500));
+    const [{ result }] = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['scout.js']
+    });
+    return Array.isArray(result) ? result : [];
+  } finally {
+    try { await chrome.tabs.remove(tab.id); } catch (e) {}
+  }
+}
+
+function waitForTabComplete(tabId, timeoutMs = 25000) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      chrome.tabs.onUpdated.removeListener(listener);
+      reject(new Error('tab load timeout'));
+    }, timeoutMs);
+    function listener(id, info) {
+      if (id === tabId && info.status === 'complete') {
+        clearTimeout(timer);
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve();
+      }
+    }
+    chrome.tabs.onUpdated.addListener(listener);
+  });
+}
+
+async function setStatus(state, message) {
+  await chrome.storage.local.set({ scoutStatus: { state, message, ts: Date.now() } });
+}
+
+// ─── CARLOS REPLY (existing single-tweet flow, unchanged) ───
 async function generateCarlosReply(tweetText, hint) {
   const data = await chrome.storage.sync.get(['claudeApiKey']);
   const apiKey = data.claudeApiKey;

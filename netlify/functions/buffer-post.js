@@ -8,12 +8,16 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { text, channelId, bufferKey } = body;
+  const { text, channelId, bufferKey, scheduledAt } = body;
   if (!text || !channelId || !bufferKey) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing text, channelId, or bufferKey' }) };
   }
 
-  const query = `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id status } } } }`;
+  const query = `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id status dueAt } } } }`;
+
+  const input = scheduledAt
+    ? { channelId, text, schedulingType: 'custom', mode: 'schedule', scheduledAt }
+    : { channelId, text, schedulingType: 'automatic', mode: 'shareNow' };
 
   try {
     const res = await fetch('https://api.buffer.com/graphql', {
@@ -22,7 +26,7 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${bufferKey}`
       },
-      body: JSON.stringify({ query, variables: { input: { channelId, text, schedulingType: 'automatic', mode: 'shareNow' } } })
+      body: JSON.stringify({ query, variables: { input } })
     });
 
     const data = await res.json();

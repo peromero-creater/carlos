@@ -493,6 +493,147 @@
   ::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--stroke2); }
 
+  /* ── SCOUT OVERLAY ── */
+  .scout-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(9,9,11,0.96);
+    backdrop-filter: blur(20px);
+    overflow-y: auto;
+    padding: 32px 24px;
+    display: none;
+  }
+  .scout-overlay.visible { display: block; }
+  .scout-inner { max-width: 880px; margin: 0 auto; }
+  .scout-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .scout-head h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .scout-head .badge {
+    background: var(--gold-dim);
+    color: var(--gold);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .scout-close {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--stroke);
+    color: var(--sub);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .scout-close:hover { border-color: var(--red); color: var(--red); }
+  .scout-stage {
+    background: var(--card);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: var(--sub);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .scout-stage.success { border-color: rgba(34,197,94,0.3); color: var(--green); }
+  .scout-stage.error { border-color: rgba(239,68,68,0.3); color: var(--red); }
+  .scout-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin: 22px 0 10px;
+  }
+  .pick-card {
+    background: var(--card);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+  .pick-card.auto { border-color: rgba(34,197,94,0.3); }
+  .pick-card.pending { border-color: rgba(234,179,8,0.3); }
+  .pick-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 10px;
+  }
+  .pick-meta .slot {
+    background: var(--card3);
+    color: var(--text);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+  .pick-meta .auto-tag { background: rgba(34,197,94,0.15); color: var(--green); padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+  .pick-meta .pending-tag { background: var(--gold-dim); color: var(--gold); padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+  .pick-original {
+    background: var(--card2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--sub);
+    line-height: 1.55;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+  }
+  .pick-original a { color: var(--gold); text-decoration: none; font-size: 11px; }
+  .pick-reply {
+    background: var(--card2);
+    border: 1px solid var(--stroke);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.55;
+    width: 100%;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 70px;
+    outline: none;
+  }
+  .pick-reply:focus { border-color: var(--stroke2); }
+  .pick-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .pick-btn {
+    background: var(--card2);
+    border: 1px solid var(--stroke);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .pick-btn:hover { border-color: var(--stroke2); }
+  .pick-btn.approve { background: var(--red); border-color: var(--red); color: #fff; }
+  .pick-btn.approve:hover { background: var(--red-hi); border-color: var(--red-hi); }
+  .pick-btn.reject:hover { border-color: var(--red); color: var(--red); }
+  .pick-btn:disabled { opacity: 0.5; cursor: wait; }
+  .pick-status { font-size: 11px; color: var(--muted); margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+  .pick-status.success { color: var(--green); }
+  .pick-status.error { color: var(--red); }
+
   /* ── MOBILE ── */
   @media (max-width: 768px) {
     .header { padding: 0 16px; height: 48px; gap: 8px; }
@@ -529,6 +670,27 @@
   <div class="header-right">
     <span class="handle">@carlosmendpoz</span>
     <div class="live-pill"><span class="dot"></span>live</div>
+  </div>
+</div>
+
+<!-- ── SCOUT OVERLAY (shown when extension hands off candidates via #scout=...) ── -->
+<div class="scout-overlay" id="scoutOverlay">
+  <div class="scout-inner">
+    <div class="scout-head">
+      <span style="font-size:24px;">🔭</span>
+      <h2>Daily Scout</h2>
+      <span class="badge" id="scoutBadge">Curating</span>
+      <button class="scout-close" onclick="closeScout()">Close</button>
+    </div>
+    <div class="scout-stage" id="scoutStage">Reading candidates...</div>
+    <div id="scoutAutoSection" style="display:none;">
+      <div class="scout-section-label">Auto-scheduled (no approval)</div>
+      <div id="scoutAutoList"></div>
+    </div>
+    <div id="scoutPendingSection" style="display:none;">
+      <div class="scout-section-label">Pending your approval</div>
+      <div id="scoutPendingList"></div>
+    </div>
   </div>
 </div>
 
@@ -843,7 +1005,298 @@ function setMode(mode, btn) {
 window.addEventListener('load', () => {
   loadKeyStatus('claude');
   loadKeyStatus('buffer');
+  maybeHandleScoutHash();
 });
+
+// ─── SCOUT HANDOFF ───
+// Channel ID matches the existing postToBuffer call. Turkey time = UTC+3 (no DST).
+const SCOUT_CHANNEL_ID = '69cab077af47dacb696e81c1';
+const SCOUT_SLOTS_TURKEY = [
+  { hour: 17, kind: 'auto' },     // 5pm — auto
+  { hour: 19, kind: 'pending' },  // 7pm — approval
+  { hour: 20, kind: 'pending' },  // 8pm — approval
+  { hour: 21, kind: 'pending' },  // 9pm — approval
+  { hour: 22, kind: 'auto' }      // 10pm — auto
+];
+
+function maybeHandleScoutHash() {
+  const hash = location.hash;
+  if (!hash.startsWith('#scout=')) return;
+  const raw = hash.slice('#scout='.length);
+  let candidates;
+  try {
+    const json = decodeURIComponent(escape(atob(decodeURIComponent(raw))));
+    candidates = JSON.parse(json);
+  } catch (err) {
+    setScoutStage('Could not decode scout payload: ' + err.message, 'error');
+    showScout();
+    return;
+  }
+  // Clear hash so refresh doesn't re-run.
+  history.replaceState(null, '', location.pathname + location.search);
+  runScoutCuration(candidates);
+}
+
+function showScout() {
+  document.getElementById('scoutOverlay').classList.add('visible');
+}
+function closeScout() {
+  document.getElementById('scoutOverlay').classList.remove('visible');
+}
+function setScoutStage(msg, kind) {
+  const el = document.getElementById('scoutStage');
+  el.textContent = msg;
+  el.className = 'scout-stage' + (kind ? ' ' + kind : '');
+}
+function setScoutBadge(text) {
+  document.getElementById('scoutBadge').textContent = text;
+}
+
+// Compute next Unix-epoch-seconds for a given Turkey hour. If hour already passed today, schedule for tomorrow.
+function nextTurkeySlotEpoch(turkeyHour) {
+  const utcHour = (turkeyHour + 24 - 3) % 24; // Turkey = UTC+3
+  const now = new Date();
+  let target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), utcHour, 0, 0));
+  if (target.getTime() <= now.getTime() + 60 * 1000) {
+    target.setUTCDate(target.getUTCDate() + 1);
+  }
+  return Math.floor(target.getTime() / 1000);
+}
+
+async function runScoutCuration(candidates) {
+  showScout();
+  setScoutStage(`Got ${candidates.length} candidates. Asking Carlos to pick 5 + write replies...`);
+  setScoutBadge('Curating');
+
+  const claudeKey = getKey('claude');
+  if (!claudeKey) {
+    setScoutStage('Save your Claude API key first (open API Keys section below).', 'error');
+    return;
+  }
+
+  // Build a single Claude call: pick 5 + write replies as JSON.
+  const numbered = candidates.map((c, i) =>
+    `[${i}] @${c.author || 'unknown'} (${c.likes || 0}♥ ${c.retweets || 0}↻ ${c.replies || 0}💬)\n${c.text}`
+  ).join('\n\n');
+
+  const curatePrompt = `You are curating today's 5-tweet schedule for Carlos. Below are ${candidates.length} candidate tweets scraped from Turkish football accounts and the #Galatasaray hashtag.
+
+Pick the 5 BEST candidates for Carlos to engage with. Selection criteria:
+- High engagement potential (controversy, hype, big news, hot takes)
+- Carlos can land an authentic Spanish reaction (his fixed opinions apply)
+- VARIETY — don't pick 5 from the same topic; spread across players, matches, refs, transfers, rivalry
+- Skip pure news/factual posts with no hook for opinion
+
+For each pick, write Carlos's Spanish reply following his persona above (1-3 sentences, his voice, no hashtags, max 1 emoji, raw text only).
+
+Candidates:
+${numbered}
+
+Return ONLY valid JSON, no markdown fences, no commentary, in this EXACT shape:
+{"picks": [{"index": <number>, "reply": "<spanish reply>"}, {"index": <number>, "reply": "..."}, {"index": <number>, "reply": "..."}, {"index": <number>, "reply": "..."}, {"index": <number>, "reply": "..."}]}
+
+Exactly 5 picks. Indices must be valid (0 to ${candidates.length - 1}). No duplicates.`;
+
+  let curated;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': claudeKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: PERSONA,
+        messages: [{ role: 'user', content: curatePrompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content[0].text.trim().replace(/^```(?:json)?\s*|\s*```$/g, '');
+    curated = JSON.parse(text);
+  } catch (err) {
+    setScoutStage('Curation failed: ' + err.message, 'error');
+    return;
+  }
+
+  if (!curated?.picks || curated.picks.length !== 5) {
+    setScoutStage('Curator returned wrong shape (need 5 picks).', 'error');
+    return;
+  }
+
+  // Map curated picks to slots in declaration order: auto, pending, pending, pending, auto.
+  const enriched = curated.picks.map((p, i) => {
+    const slot = SCOUT_SLOTS_TURKEY[i];
+    const cand = candidates[p.index];
+    return {
+      slotHour: slot.hour,
+      kind: slot.kind,
+      reply: p.reply,
+      candidate: cand,
+      scheduledAt: nextTurkeySlotEpoch(slot.hour)
+    };
+  });
+
+  const autos = enriched.filter(p => p.kind === 'auto');
+  const pendings = enriched.filter(p => p.kind === 'pending');
+
+  // Render pending immediately so user sees them while autos post.
+  renderPending(pendings);
+  document.getElementById('scoutPendingSection').style.display = 'block';
+  document.getElementById('scoutAutoSection').style.display = 'block';
+  renderAuto(autos, 'queueing');
+
+  // Auto-post the 2 autos.
+  setScoutStage('Posting 2 auto-tweets to Buffer...');
+  setScoutBadge('Posting');
+  const bufferKey = getKey('buffer');
+  if (!bufferKey) {
+    setScoutStage('No Buffer key saved — autos cannot be scheduled. Save key, then approve manually below.', 'error');
+    autos.forEach(a => a.error = 'No Buffer key');
+    renderAuto(autos);
+    return;
+  }
+
+  for (const a of autos) {
+    try {
+      await postPickToBuffer(a, bufferKey);
+      a.posted = true;
+    } catch (err) {
+      a.error = err.message;
+    }
+  }
+  renderAuto(autos);
+  const okCount = autos.filter(a => a.posted).length;
+  setScoutStage(`Done. ${okCount}/2 auto-posts scheduled. ${pendings.length} awaiting your approval below.`, 'success');
+  setScoutBadge('Ready');
+}
+
+async function postPickToBuffer(pick, bufferKey) {
+  const text = `${pick.reply} ${pick.candidate.url}`.trim();
+  if (text.length > 280) {
+    throw new Error(`Over 280 chars (${text.length})`);
+  }
+  const res = await fetch('/.netlify/functions/buffer-post', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text,
+      channelId: SCOUT_CHANNEL_ID,
+      bufferKey,
+      scheduledAt: String(pick.scheduledAt)
+    })
+  });
+  const raw = await res.text();
+  let data;
+  try { data = JSON.parse(raw); } catch { throw new Error('Non-JSON: ' + raw.substring(0, 120)); }
+  if (data.error) throw new Error(data.error);
+  if (data.errors?.length) throw new Error(data.errors[0].message);
+  return data;
+}
+
+function slotLabel(hour) {
+  return `${hour}:00 Turkey`;
+}
+
+function renderAuto(autos, state) {
+  const list = document.getElementById('scoutAutoList');
+  list.innerHTML = autos.map((a, i) => {
+    let statusHtml = '';
+    if (a.posted) statusHtml = `<div class="pick-status success">✓ Scheduled to Buffer for ${slotLabel(a.slotHour)}</div>`;
+    else if (a.error) statusHtml = `<div class="pick-status error">✗ ${escapeHtml(a.error)}</div>`;
+    else if (state === 'queueing') statusHtml = `<div class="pick-status">⟳ Posting to Buffer...</div>`;
+    return `
+      <div class="pick-card auto">
+        <div class="pick-meta">
+          <span class="auto-tag">AUTO</span>
+          <span class="slot">${slotLabel(a.slotHour)}</span>
+          <span>@${escapeHtml(a.candidate.author || 'unknown')} • ${a.candidate.likes || 0}♥ ${a.candidate.retweets || 0}↻</span>
+        </div>
+        <div class="pick-original">${escapeHtml(a.candidate.text)}<br><a href="${escapeHtml(a.candidate.url)}" target="_blank">${escapeHtml(a.candidate.url)}</a></div>
+        <div class="pick-original" style="background:transparent;border-left:2px solid var(--green);padding-left:10px;">${escapeHtml(a.reply)}</div>
+        ${statusHtml}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPending(pendings) {
+  window._scoutPendings = pendings;
+  const list = document.getElementById('scoutPendingList');
+  list.innerHTML = pendings.map((p, i) => `
+    <div class="pick-card pending" id="pending-${i}">
+      <div class="pick-meta">
+        <span class="pending-tag">APPROVAL</span>
+        <span class="slot">${slotLabel(p.slotHour)}</span>
+        <span>@${escapeHtml(p.candidate.author || 'unknown')} • ${p.candidate.likes || 0}♥ ${p.candidate.retweets || 0}↻</span>
+      </div>
+      <div class="pick-original">${escapeHtml(p.candidate.text)}<br><a href="${escapeHtml(p.candidate.url)}" target="_blank">${escapeHtml(p.candidate.url)}</a></div>
+      <textarea class="pick-reply" id="pending-reply-${i}" oninput="updatePendingChars(${i})">${escapeHtml(p.reply)}</textarea>
+      <div class="pick-status" id="pending-chars-${i}"></div>
+      <div class="pick-actions">
+        <button class="pick-btn approve" onclick="approvePending(${i})">✓ Approve & Schedule</button>
+        <button class="pick-btn reject" onclick="rejectPending(${i})">✗ Reject</button>
+      </div>
+      <div class="pick-status" id="pending-status-${i}"></div>
+    </div>
+  `).join('');
+  pendings.forEach((_, i) => updatePendingChars(i));
+}
+
+function updatePendingChars(i) {
+  const reply = document.getElementById('pending-reply-' + i).value;
+  const url = window._scoutPendings[i].candidate.url;
+  const total = (reply + ' ' + url).trim().length;
+  const el = document.getElementById('pending-chars-' + i);
+  el.textContent = `${total} / 280 (incl. URL)`;
+  el.className = 'pick-status' + (total > 280 ? ' error' : '');
+}
+
+async function approvePending(i) {
+  const pick = window._scoutPendings[i];
+  pick.reply = document.getElementById('pending-reply-' + i).value.trim();
+  const card = document.getElementById('pending-' + i);
+  const statusEl = document.getElementById('pending-status-' + i);
+  const buttons = card.querySelectorAll('.pick-btn');
+  buttons.forEach(b => b.disabled = true);
+  statusEl.className = 'pick-status';
+  statusEl.textContent = '⟳ Scheduling to Buffer...';
+
+  const bufferKey = getKey('buffer');
+  if (!bufferKey) {
+    statusEl.className = 'pick-status error';
+    statusEl.textContent = 'Save your Buffer API key first (API Keys section below).';
+    buttons.forEach(b => b.disabled = false);
+    return;
+  }
+
+  try {
+    await postPickToBuffer(pick, bufferKey);
+    statusEl.className = 'pick-status success';
+    statusEl.textContent = `✓ Scheduled for ${slotLabel(pick.slotHour)}`;
+  } catch (err) {
+    statusEl.className = 'pick-status error';
+    statusEl.textContent = '✗ ' + err.message;
+    buttons.forEach(b => b.disabled = false);
+  }
+}
+
+function rejectPending(i) {
+  const card = document.getElementById('pending-' + i);
+  card.style.opacity = '0.4';
+  const statusEl = document.getElementById('pending-status-' + i);
+  statusEl.className = 'pick-status';
+  statusEl.textContent = 'Rejected — slot will be empty.';
+  card.querySelectorAll('.pick-btn').forEach(b => b.disabled = true);
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 function saveKey(type) {
   const input = document.getElementById(type + 'KeyInput');
