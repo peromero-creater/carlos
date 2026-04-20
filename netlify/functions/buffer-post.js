@@ -8,18 +8,19 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { text, channelId, bufferKey, scheduledAt, schedulingType } = body;
+  // Accept either `dueAt` (Buffer's real field name) or legacy `scheduledAt` for back-compat.
+  const { text, channelId, bufferKey, schedulingType } = body;
+  const dueAt = body.dueAt || body.scheduledAt;
   if (!text || !channelId || !bufferKey) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing text, channelId, or bufferKey' }) };
   }
 
-  const query = `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id status dueAt } } } }`;
+  const query = `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id status dueAt } } ... on MutationError { message } } }`;
 
-  // Buffer's SchedulingType enum only has 'automatic' and 'notification'.
-  // 'notification' = Instagram-reminder style (not what we want).
-  // 'automatic' + mode: 'schedule' + explicit scheduledAt lets Buffer honor the exact time.
-  const input = scheduledAt
-    ? { channelId, text, schedulingType: schedulingType || 'automatic', mode: 'schedule', scheduledAt }
+  // Buffer GraphQL: for a custom future time, mode: customScheduled + dueAt (ISO 8601 UTC).
+  // See https://developers.buffer.com/guides/posts-and-scheduling.html
+  const input = dueAt
+    ? { channelId, text, schedulingType: schedulingType || 'automatic', mode: 'customScheduled', dueAt }
     : { channelId, text, schedulingType: schedulingType || 'automatic', mode: 'shareNow' };
 
   try {

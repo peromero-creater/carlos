@@ -1187,7 +1187,7 @@ async function postPickToBuffer(pick, bufferKey) {
       text,
       channelId: SCOUT_CHANNEL_ID,
       bufferKey,
-      scheduledAt: pick.scheduledAt
+      dueAt: pick.scheduledAt
     })
   });
   const raw = await res.text();
