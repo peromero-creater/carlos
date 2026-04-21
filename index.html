@@ -1011,6 +1011,8 @@ window.addEventListener('load', () => {
 // ─── SCOUT HANDOFF ───
 // Channel ID matches the existing postToBuffer call. Turkey time = UTC+3 (no DST).
 const SCOUT_CHANNEL_ID = '69cab077af47dacb696e81c1';
+// Anchor hours — the minute is jittered each run so we don't post at the exact same clock time every day.
+// Window is 17:00–22:59 Turkey. Slots are 1h+ apart so random minutes can't cross anchors.
 const SCOUT_SLOTS_TURKEY = [
   { hour: 17, kind: 'auto' },     // 5pm — auto
   { hour: 19, kind: 'pending' },  // 7pm — approval
@@ -1052,11 +1054,16 @@ function setScoutBadge(text) {
   document.getElementById('scoutBadge').textContent = text;
 }
 
-// Compute next ISO timestamp for a given Turkey hour. If hour already passed today, schedule for tomorrow.
-function nextTurkeySlotISO(turkeyHour) {
-  const utcHour = (turkeyHour + 24 - 3) % 24; // Turkey = UTC+3
+function randomMinuteForSlot() {
+  // Uniform random minute 0–59 so each post time varies day-to-day (anti-bot pattern).
+  return Math.floor(Math.random() * 60);
+}
+
+// Compute next ISO timestamp for a given Turkey hour + minute. If already passed today, schedule for tomorrow.
+function nextTurkeySlotISO(turkeyHour, turkeyMinute) {
+  const utcHour = (turkeyHour + 24 - 3) % 24; // Turkey = UTC+3, no DST
   const now = new Date();
-  let target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), utcHour, 0, 0));
+  let target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), utcHour, turkeyMinute, 0));
   if (target.getTime() <= now.getTime() + 60 * 1000) {
     target.setUTCDate(target.getUTCDate() + 1);
   }
@@ -1129,15 +1136,18 @@ Exactly 5 picks. Indices must be valid (0 to ${candidates.length - 1}). No dupli
   }
 
   // Map curated picks to slots in declaration order: auto, pending, pending, pending, auto.
+  // Each slot gets a random minute so post times vary day-to-day (anti-bot).
   const enriched = curated.picks.map((p, i) => {
     const slot = SCOUT_SLOTS_TURKEY[i];
+    const minute = randomMinuteForSlot();
     const cand = candidates[p.index];
     return {
       slotHour: slot.hour,
+      slotMinute: minute,
       kind: slot.kind,
       reply: p.reply,
       candidate: cand,
-      scheduledAt: nextTurkeySlotISO(slot.hour)
+      scheduledAt: nextTurkeySlotISO(slot.hour, minute)
     };
   });
 
@@ -1202,22 +1212,23 @@ async function postPickToBuffer(pick, bufferKey) {
   return data;
 }
 
-function slotLabel(hour) {
-  return `${hour}:00 Turkey`;
+function slotLabel(hour, minute) {
+  const mm = String(minute ?? 0).padStart(2, '0');
+  return `${hour}:${mm} Turkey`;
 }
 
 function renderAuto(autos, state) {
   const list = document.getElementById('scoutAutoList');
   list.innerHTML = autos.map((a, i) => {
     let statusHtml = '';
-    if (a.posted) statusHtml = `<div class="pick-status success">✓ Scheduled to Buffer for ${slotLabel(a.slotHour)}</div>`;
+    if (a.posted) statusHtml = `<div class="pick-status success">✓ Scheduled to Buffer for ${slotLabel(a.slotHour, a.slotMinute)}</div>`;
     else if (a.error) statusHtml = `<div class="pick-status error">✗ ${escapeHtml(a.error)}</div>`;
     else if (state === 'queueing') statusHtml = `<div class="pick-status">⟳ Posting to Buffer...</div>`;
     return `
       <div class="pick-card auto">
         <div class="pick-meta">
           <span class="auto-tag">AUTO</span>
-          <span class="slot">${slotLabel(a.slotHour)}</span>
+          <span class="slot">${slotLabel(a.slotHour, a.slotMinute)}</span>
           <span>@${escapeHtml(a.candidate.author || 'unknown')} • ${a.candidate.likes || 0}♥ ${a.candidate.retweets || 0}↻</span>
         </div>
         <div class="pick-original">${escapeHtml(a.candidate.text)}<br><a href="${escapeHtml(a.candidate.url)}" target="_blank">${escapeHtml(a.candidate.url)}</a></div>
@@ -1235,7 +1246,7 @@ function renderPending(pendings) {
     <div class="pick-card pending" id="pending-${i}">
       <div class="pick-meta">
         <span class="pending-tag">APPROVAL</span>
-        <span class="slot">${slotLabel(p.slotHour)}</span>
+        <span class="slot">${slotLabel(p.slotHour, p.slotMinute)}</span>
         <span>@${escapeHtml(p.candidate.author || 'unknown')} • ${p.candidate.likes || 0}♥ ${p.candidate.retweets || 0}↻</span>
       </div>
       <div class="pick-original">${escapeHtml(p.candidate.text)}<br><a href="${escapeHtml(p.candidate.url)}" target="_blank">${escapeHtml(p.candidate.url)}</a></div>
@@ -1281,7 +1292,7 @@ async function approvePending(i) {
   try {
     await postPickToBuffer(pick, bufferKey);
     statusEl.className = 'pick-status success';
-    statusEl.textContent = `✓ Scheduled for ${slotLabel(pick.slotHour)}`;
+    statusEl.textContent = `✓ Scheduled for ${slotLabel(pick.slotHour, pick.slotMinute)}`;
   } catch (err) {
     statusEl.className = 'pick-status error';
     statusEl.textContent = '✗ ' + err.message;
