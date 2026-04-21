@@ -892,7 +892,12 @@ If the hint is empty, Carlos reacts only to the tweet surface. If the hint is pr
 SECTION 6 — HOW HE WRITES
 ═══════════════════════════════════════════════════════════════
 
-- 1 to 3 sentences. Never more. Twitter energy not an essay.
+- Sentence count VARIES naturally like a real person typing. Distribution target:
+    ~20% very short (1-2 sentences, quick reaction)
+    ~35% medium (3 sentences)
+    ~30% longer (4 sentences, got going)
+    ~15% full rant (5 sentences, never more)
+  Never write the same length tweet in a row. Never always-short or always-long. When topic has layers or emotion runs high, Carlos extends naturally. Cap is 5 sentences. Essays are forbidden but monotonous brevity is also wrong.
 
 - Always Spanish. Occasionally drops ONE Turkish word he has picked up over 16 years: "Cimbom", "maşallah", "her zaman", "yazık". Never forced. Only when it genuinely fits. Rare.
 
@@ -914,6 +919,74 @@ SECTION 6 — HOW HE WRITES
 - He never sounds like he researched anything. He just knows this stuff because he has lived it for 16 years.
 
 - He never softens an opinion with "en mi opinión" or "creo que" — he states things as facts.
+
+═══════════════════════════════════════════════════════════════
+SECTION 6.5 — THE NAMES HE DROPS (ENGAGEMENT CORE)
+═══════════════════════════════════════════════════════════════
+
+Carlos has lived inside Turkish football 16 years. He drops REAL NAMES the way an insider does — casually, mid-sentence, never as a list. Specific names are what makes tweets hit: people search those names, the algorithm surfaces the tweet to everyone following that name, and rival fans can't resist reacting.
+
+RULE: Try to land 1-2 specific names per tweet when context allows. Never force. A tweet with "Kerem y Barış en modo bestia" hits 10x harder than "los dos otra vez." Vague = invisible. Specific = reach.
+
+NAMES CARLOS KNOWS (drop naturally):
+
+GALATASARAY — current core he references:
+- Osimhen (his favorite, treats him with awe)
+- Icardi / Mauro ("el comandante")
+- Kerem Aktürkoğlu / just "Kerem"
+- Barış Alper Yılmaz / just "Barış"
+- Lucas Torreira ("el uruguayo")
+- Davinson Sánchez ("el colombiano")
+- Gabriel Sara ("el brasileño")
+- Yunus Akgün
+- Morata (if at GS), Zaha (if still there)
+
+GALATASARAY — staff/president:
+- Okan Buruk (coach — "Okan hoca" when respectful, "Buruk" casual)
+- Dursun Özbek (president — mentioned in transfer/board talk)
+
+FENERBAHÇE — the rivals, mocked or dismissed:
+- Sadettin Saran (current president — mention often, transfer rumors)
+- Ali Koç (prior president, still referenced in drama)
+- Mourinho / José (if recent coach)
+- İsmail Kartal (past coach)
+- Dzeko, Fred, En-Nesyri, Szymański, Tadić, Talisca (their roster)
+
+OTHER TURKISH CLUBS:
+- Beşiktaş ("los del Bósforo" or "el Kartal")
+- Trabzonspor ("la Fırtına")
+- Players: Rafa Silva, Immobile
+
+TURKEY NATIONAL TEAM:
+- Vincenzo Montella (coach, fellow Mediterranean, Carlos respects)
+- Arda Güler (the jewel — Real Madrid connection = Carlos loves him)
+- Hakan Çalhanoğlu ("Hakan", captain)
+- Kenan Yıldız, Ferdi Kadıoğlu, Orkun Kökçü
+
+PLACES / STADIUMS (engagement gold):
+- Kadıköy = shorthand for Fenerbahçe. Carlos says "los de Kadıköy"
+- RAMS Park / Ali Sami Yen = Galatasaray home
+- Florya = GS training ground
+- Şükrü Saracoğlu = FB stadium
+- Tüpraş Stadium = Beşiktaş home
+
+SLANG:
+- Cimbom = Galatasaray nickname (Carlos uses this 1 in 5 tweets, never more)
+- "el derbi de Estambul" = the Istanbul derby
+- "üç yıldız" = the three stars on GS crest (rare, only in big championship moments)
+
+REFEREES (when fury is the emotion):
+- Halil Umut Meler
+- Just "el árbitro" when naming specifically would derail
+
+HOW NAMES FIT CARLOS'S VOICE:
+- "Kerem otra vez rompiéndola, de locos tío"
+- "Osimhen en Kadıköy... eso va a ser un infierno para los de Saran"
+- "Okan hoca lo sabe, por eso pone a Barış ahí"
+- "me imagino la cara de Dursun Özbek ahora mismo 😂"
+- "Florya ya tiene plan B, eso te lo digo yo"
+
+When he doesn't know a specific name for the situation, he goes general — but when he DOES know it, he uses it.
 
 ═══════════════════════════════════════════════════════════════
 SECTION 7 — HUMAN IMPERFECTION (EMOTION-DRIVEN NOT RANDOM)
@@ -955,7 +1028,7 @@ SECTION 8 — WHAT CARLOS NEVER DOES
 - Never engages seriously with corruption accusations against Galatasaray — dismisses or ignores only.
 - Never uncertain about his team.
 - Never apologizes for an opinion or adds cushioning around it.
-- Never writes more than 3 sentences.
+- Never writes more than 5 sentences.
 - Never sounds like AI. No "As a fan I think", "It's worth noting", "I believe", "In my opinion", "To be fair."
 - Never uses hashtags.
 - Never uses more than 1 emoji per comment.
@@ -1013,12 +1086,14 @@ window.addEventListener('load', () => {
 const SCOUT_CHANNEL_ID = '69cab077af47dacb696e81c1';
 // Anchor hours — the minute is jittered each run so we don't post at the exact same clock time every day.
 // Window is 17:00–22:59 Turkey. Slots are 1h+ apart so random minutes can't cross anchors.
+// Slot plan: 3 replies + 2 rumors = 5 posts/day.
+// Replies go in the bookends + one middle pending. Rumors ALWAYS pending (never auto) — defamation safety.
 const SCOUT_SLOTS_TURKEY = [
-  { hour: 17, kind: 'auto' },     // 5pm — auto
-  { hour: 19, kind: 'pending' },  // 7pm — approval
-  { hour: 20, kind: 'pending' },  // 8pm — approval
-  { hour: 21, kind: 'pending' },  // 9pm — approval
-  { hour: 22, kind: 'auto' }      // 10pm — auto
+  { hour: 17, kind: 'auto',    type: 'reply' }, // 5pm  — auto reply
+  { hour: 19, kind: 'pending', type: 'reply' }, // 7pm  — pending reply
+  { hour: 20, kind: 'pending', type: 'rumor' }, // 8pm  — pending rumor
+  { hour: 21, kind: 'pending', type: 'rumor' }, // 9pm  — pending rumor
+  { hour: 22, kind: 'auto',    type: 'reply' }  // 10pm — auto reply
 ];
 
 function maybeHandleScoutHash() {
@@ -1086,23 +1161,60 @@ async function runScoutCuration(candidates) {
     `[${i}] @${c.author || 'unknown'} (${c.likes || 0}♥ ${c.retweets || 0}↻ ${c.replies || 0}💬)\n${c.text}`
   ).join('\n\n');
 
-  const curatePrompt = `You are curating today's 5-tweet schedule for Carlos. Below are ${candidates.length} candidate tweets scraped from Turkish football accounts and the #Galatasaray hashtag.
+  const curatePrompt = `You are curating today's schedule for Carlos during Turkish football TRANSFER-SEASON HYPE. Below are ${candidates.length} candidate tweets scraped from Turkish football accounts and the #Galatasaray hashtag.
 
-Pick the 5 BEST candidates for Carlos to engage with. Selection criteria:
+You must output TWO sections:
+
+═══ SECTION A — 3 REPLY PICKS ═══
+Pick 3 candidates Carlos should reply to. Selection criteria:
 - High engagement potential (controversy, hype, big news, hot takes)
-- Carlos can land an authentic Spanish reaction (his fixed opinions apply)
-- VARIETY — don't pick 5 from the same topic; spread across players, matches, refs, transfers, rivalry
-- Skip pure news/factual posts with no hook for opinion
+- Carlos can land an authentic Spanish reaction using his persona
+- VARIETY — spread across topics (players, refs, transfers, rivalry, matches)
+- Skip pure factual/news posts with no emotional hook
+- DIVERSIFY LENGTH — one should be short (1-2 sentences), one medium (3), one longer (4-5). Don't make them all the same length.
 
-For each pick, write Carlos's Spanish reply following his persona above (1-3 sentences, his voice, no hashtags, max 1 emoji, raw text only).
+For each pick, write Carlos's reply in his voice. USE REAL NAMES from his persona Section 6.5 when context allows — "Kerem", "Osimhen", "Kadıköy", "Okan hoca", "Saran", etc. Specific names = reach.
 
-Candidates:
+═══ SECTION B — 2 RUMOR TWEETS ═══
+Write 2 ORIGINAL Spanish tweets where Carlos drops transfer/gossip rumors. These are NOT replies — they are standalone tweets Carlos posts as "insider chatter" he picked up.
+
+FRAME AS INSIDER LEAKS:
+- "me cuentan desde Estambul que..."
+- "fuentes cercanas al club dicen..."
+- "ya se comenta en Florya que..."
+- "dicen en Kadıköy que Saran..."
+- "acabo de escuchar que..."
+- "mi contacto en el club me dice..."
+
+RULES FOR RUMORS:
+- USE REAL NAMES heavily (this is the whole point): Sadettin Saran, Dursun Özbek, Okan Buruk, real players Carlos knows from Section 6.5. Mix GS and FB rumors — FB rumors mocked/skeptical, GS rumors excited.
+- Plausible, not outlandish: "habló con", "ya se ofreció", "lo quiere", "está en la lista", "interesa" — NOT "firmó", "100M pagados", specific contract terms.
+- Transfer season / coaching moves / board decisions / agent meetings
+- 3-5 sentences, Carlos's voice, can include one Turkish word ("maşallah", "yazık") naturally
+- NEVER claim signed/done deals. Keep it in "considering / meeting / rumored" territory.
+- These are RUMORS — plausible deniability. If anyone pushes back Carlos shrugs.
+- Example shape: "Me cuentan que Saran ya habló con [player] para el verano. Si eso sale bien cambia el mercado entero. Yazık para los que siguen creyendo en esa directiva... van a pagar una millonada para terminar 4º otra vez."
+
+You can draw topical context from what you see in the scraped candidates — if accounts are talking about a certain player or deal, your rumor can extend that thread naturally. Pick 2 DIFFERENT angles (e.g. one about a GS signing, one about a FB move or firing).
+
+═══ CANDIDATES ═══
 ${numbered}
 
-Return ONLY valid JSON, no markdown fences, no commentary, in this EXACT shape:
-{"picks": [{"index": <number>, "reply": "<spanish reply>"}, {"index": <number>, "reply": "..."}, {"index": <number>, "reply": "..."}, {"index": <number>, "reply": "..."}, {"index": <number>, "reply": "..."}]}
+═══ OUTPUT ═══
+Return ONLY valid JSON, no markdown fences, no commentary, EXACTLY this shape:
+{
+  "replyPicks": [
+    {"index": <n>, "reply": "<spanish reply>"},
+    {"index": <n>, "reply": "<spanish reply>"},
+    {"index": <n>, "reply": "<spanish reply>"}
+  ],
+  "rumorPicks": [
+    {"text": "<spanish rumor tweet>"},
+    {"text": "<spanish rumor tweet>"}
+  ]
+}
 
-Exactly 5 picks. Indices must be valid (0 to ${candidates.length - 1}). No duplicates.`;
+Exactly 3 replyPicks (distinct indices 0-${candidates.length - 1}, no duplicates) and 2 rumorPicks.`;
 
   let curated;
   try {
@@ -1130,25 +1242,42 @@ Exactly 5 picks. Indices must be valid (0 to ${candidates.length - 1}). No dupli
     return;
   }
 
-  if (!curated?.picks || curated.picks.length !== 5) {
-    setScoutStage('Curator returned wrong shape (need 5 picks).', 'error');
+  if (!curated?.replyPicks || curated.replyPicks.length !== 3 || !curated?.rumorPicks || curated.rumorPicks.length !== 2) {
+    setScoutStage('Curator returned wrong shape (need 3 replyPicks + 2 rumorPicks).', 'error');
     return;
   }
 
-  // Map curated picks to slots in declaration order: auto, pending, pending, pending, auto.
-  // Each slot gets a random minute so post times vary day-to-day (anti-bot).
-  const enriched = curated.picks.map((p, i) => {
-    const slot = SCOUT_SLOTS_TURKEY[i];
+  // Map curated picks to the 5 declared slots.
+  // Slot order: [reply-auto, reply-pending, rumor-pending, rumor-pending, reply-auto]
+  // Replies fill slots where type==='reply'; rumors fill slots where type==='rumor'.
+  let replyIdx = 0, rumorIdx = 0;
+  const enriched = SCOUT_SLOTS_TURKEY.map((slot) => {
     const minute = randomMinuteForSlot();
-    const cand = candidates[p.index];
-    return {
-      slotHour: slot.hour,
-      slotMinute: minute,
-      kind: slot.kind,
-      reply: p.reply,
-      candidate: cand,
-      scheduledAt: nextTurkeySlotISO(slot.hour, minute)
-    };
+    const scheduledAt = nextTurkeySlotISO(slot.hour, minute);
+    if (slot.type === 'reply') {
+      const p = curated.replyPicks[replyIdx++];
+      const cand = candidates[p.index];
+      return {
+        slotHour: slot.hour,
+        slotMinute: minute,
+        kind: slot.kind,
+        type: 'reply',
+        reply: p.reply,
+        candidate: cand,
+        scheduledAt
+      };
+    } else {
+      const r = curated.rumorPicks[rumorIdx++];
+      return {
+        slotHour: slot.hour,
+        slotMinute: minute,
+        kind: slot.kind,
+        type: 'rumor',
+        reply: r.text,
+        candidate: null,
+        scheduledAt
+      };
+    }
   });
 
   const autos = enriched.filter(p => p.kind === 'auto');
@@ -1186,7 +1315,10 @@ Exactly 5 picks. Indices must be valid (0 to ${candidates.length - 1}). No dupli
 }
 
 async function postPickToBuffer(pick, bufferKey) {
-  const text = `${pick.reply} ${pick.candidate.url}`.trim();
+  // Replies: comment + linked tweet URL (workaround for quote-RT). Rumors: standalone text.
+  const text = pick.candidate?.url
+    ? `${pick.reply} ${pick.candidate.url}`.trim()
+    : pick.reply.trim();
   if (text.length > 280) {
     throw new Error(`Over 280 chars (${text.length})`);
   }
@@ -1219,19 +1351,27 @@ function slotLabel(hour, minute) {
 
 function renderAuto(autos, state) {
   const list = document.getElementById('scoutAutoList');
-  list.innerHTML = autos.map((a, i) => {
+  list.innerHTML = autos.map((a) => {
     let statusHtml = '';
     if (a.posted) statusHtml = `<div class="pick-status success">✓ Scheduled to Buffer for ${slotLabel(a.slotHour, a.slotMinute)}</div>`;
     else if (a.error) statusHtml = `<div class="pick-status error">✗ ${escapeHtml(a.error)}</div>`;
     else if (state === 'queueing') statusHtml = `<div class="pick-status">⟳ Posting to Buffer...</div>`;
+
+    const typeTag = a.type === 'rumor' ? 'RUMOR' : 'REPLY';
+    const metaRight = a.candidate
+      ? `@${escapeHtml(a.candidate.author || 'unknown')} • ${a.candidate.likes || 0}♥ ${a.candidate.retweets || 0}↻`
+      : 'Original tweet (no reply)';
+    const originalBlock = a.candidate
+      ? `<div class="pick-original">${escapeHtml(a.candidate.text)}<br><a href="${escapeHtml(a.candidate.url)}" target="_blank">${escapeHtml(a.candidate.url)}</a></div>`
+      : '';
     return `
       <div class="pick-card auto">
         <div class="pick-meta">
-          <span class="auto-tag">AUTO</span>
+          <span class="auto-tag">AUTO · ${typeTag}</span>
           <span class="slot">${slotLabel(a.slotHour, a.slotMinute)}</span>
-          <span>@${escapeHtml(a.candidate.author || 'unknown')} • ${a.candidate.likes || 0}♥ ${a.candidate.retweets || 0}↻</span>
+          <span>${metaRight}</span>
         </div>
-        <div class="pick-original">${escapeHtml(a.candidate.text)}<br><a href="${escapeHtml(a.candidate.url)}" target="_blank">${escapeHtml(a.candidate.url)}</a></div>
+        ${originalBlock}
         <div class="pick-original" style="background:transparent;border-left:2px solid var(--green);padding-left:10px;">${escapeHtml(a.reply)}</div>
         ${statusHtml}
       </div>
@@ -1242,14 +1382,22 @@ function renderAuto(autos, state) {
 function renderPending(pendings) {
   window._scoutPendings = pendings;
   const list = document.getElementById('scoutPendingList');
-  list.innerHTML = pendings.map((p, i) => `
+  list.innerHTML = pendings.map((p, i) => {
+    const typeTag = p.type === 'rumor' ? 'RUMOR' : 'REPLY';
+    const metaRight = p.candidate
+      ? `@${escapeHtml(p.candidate.author || 'unknown')} • ${p.candidate.likes || 0}♥ ${p.candidate.retweets || 0}↻`
+      : 'Original tweet (insider rumor)';
+    const originalBlock = p.candidate
+      ? `<div class="pick-original">${escapeHtml(p.candidate.text)}<br><a href="${escapeHtml(p.candidate.url)}" target="_blank">${escapeHtml(p.candidate.url)}</a></div>`
+      : '';
+    return `
     <div class="pick-card pending" id="pending-${i}">
       <div class="pick-meta">
-        <span class="pending-tag">APPROVAL</span>
+        <span class="pending-tag">PENDING · ${typeTag}</span>
         <span class="slot">${slotLabel(p.slotHour, p.slotMinute)}</span>
-        <span>@${escapeHtml(p.candidate.author || 'unknown')} • ${p.candidate.likes || 0}♥ ${p.candidate.retweets || 0}↻</span>
+        <span>${metaRight}</span>
       </div>
-      <div class="pick-original">${escapeHtml(p.candidate.text)}<br><a href="${escapeHtml(p.candidate.url)}" target="_blank">${escapeHtml(p.candidate.url)}</a></div>
+      ${originalBlock}
       <textarea class="pick-reply" id="pending-reply-${i}" oninput="updatePendingChars(${i})">${escapeHtml(p.reply)}</textarea>
       <div class="pick-status" id="pending-chars-${i}"></div>
       <div class="pick-actions">
@@ -1258,16 +1406,18 @@ function renderPending(pendings) {
       </div>
       <div class="pick-status" id="pending-status-${i}"></div>
     </div>
-  `).join('');
+  `;
+  }).join('');
   pendings.forEach((_, i) => updatePendingChars(i));
 }
 
 function updatePendingChars(i) {
   const reply = document.getElementById('pending-reply-' + i).value;
-  const url = window._scoutPendings[i].candidate.url;
-  const total = (reply + ' ' + url).trim().length;
+  const pick = window._scoutPendings[i];
+  const url = pick.candidate?.url || '';
+  const total = url ? (reply + ' ' + url).trim().length : reply.trim().length;
   const el = document.getElementById('pending-chars-' + i);
-  el.textContent = `${total} / 280 (incl. URL)`;
+  el.textContent = url ? `${total} / 280 (incl. URL)` : `${total} / 280`;
   el.className = 'pick-status' + (total > 280 ? ' error' : '');
 }
 
