@@ -1085,15 +1085,17 @@ window.addEventListener('load', () => {
 // Channel ID matches the existing postToBuffer call. Turkey time = UTC+3 (no DST).
 const SCOUT_CHANNEL_ID = '69cab077af47dacb696e81c1';
 // Anchor hours — the minute is jittered each run so we don't post at the exact same clock time every day.
-// Window is 17:00–22:59 Turkey. Slots are 1h+ apart so random minutes can't cross anchors.
-// Slot plan: 3 replies + 2 rumors = 5 posts/day.
-// Replies go in the bookends + one middle pending. Rumors ALWAYS pending (never auto) — defamation safety.
+// Window is 17:00–23:59 Turkey. 7 slots (one per hour). Minute is clamped to 0–49 so consecutive
+// slots are always ≥11 min apart even at worst-case jitter (e.g. 17:49 → 18:00).
+// Slot plan: 4 replies + 3 rumors = 7 posts/day. ALL auto-scheduled (no approval step).
 const SCOUT_SLOTS_TURKEY = [
-  { hour: 17, kind: 'auto',    type: 'reply' }, // 5pm  — auto reply
-  { hour: 19, kind: 'pending', type: 'reply' }, // 7pm  — pending reply
-  { hour: 20, kind: 'pending', type: 'rumor' }, // 8pm  — pending rumor
-  { hour: 21, kind: 'pending', type: 'rumor' }, // 9pm  — pending rumor
-  { hour: 22, kind: 'auto',    type: 'reply' }  // 10pm — auto reply
+  { hour: 17, kind: 'auto', type: 'reply' }, // 5pm
+  { hour: 18, kind: 'auto', type: 'rumor' }, // 6pm
+  { hour: 19, kind: 'auto', type: 'reply' }, // 7pm
+  { hour: 20, kind: 'auto', type: 'rumor' }, // 8pm
+  { hour: 21, kind: 'auto', type: 'reply' }, // 9pm
+  { hour: 22, kind: 'auto', type: 'rumor' }, // 10pm
+  { hour: 23, kind: 'auto', type: 'reply' }  // 11pm
 ];
 
 function maybeHandleScoutHash() {
@@ -1130,8 +1132,9 @@ function setScoutBadge(text) {
 }
 
 function randomMinuteForSlot() {
-  // Uniform random minute 0–59 so each post time varies day-to-day (anti-bot pattern).
-  return Math.floor(Math.random() * 60);
+  // Uniform random minute 0–49 so each post time varies day-to-day (anti-bot pattern).
+  // Capped at 49 to guarantee ≥11 min between consecutive 1h-spaced slots.
+  return Math.floor(Math.random() * 50);
 }
 
 // Compute next ISO timestamp for a given Turkey hour + minute. If already passed today, schedule for tomorrow.
@@ -1147,7 +1150,7 @@ function nextTurkeySlotISO(turkeyHour, turkeyMinute) {
 
 async function runScoutCuration(candidates) {
   showScout();
-  setScoutStage(`Got ${candidates.length} candidates. Asking Carlos to pick 5 + write replies...`);
+  setScoutStage(`Got ${candidates.length} candidates. Asking Carlos to pick 4 replies + write 3 rumors...`);
   setScoutBadge('Curating');
 
   const claudeKey = getKey('claude');
@@ -1163,20 +1166,26 @@ async function runScoutCuration(candidates) {
 
   const curatePrompt = `You are curating today's schedule for Carlos during Turkish football TRANSFER-SEASON HYPE. Below are ${candidates.length} candidate tweets scraped from Turkish football accounts and the #Galatasaray hashtag.
 
-You must output TWO sections:
+You must output TWO sections.
 
-═══ SECTION A — 3 REPLY PICKS ═══
-Pick 3 candidates Carlos should reply to. Selection criteria:
+═══ HARD CHARACTER LIMITS — NON-NEGOTIABLE ═══
+Replies will be posted as: "<your reply> <tweet URL>". The URL eats ~55 chars.
+- REPLY text: MAX 200 characters. Aim for 150-190. Anything over 200 will be REJECTED.
+- RUMOR text: MAX 270 characters. Aim for 200-260. No URL appended.
+COUNT YOUR CHARACTERS before finalizing each piece. If a piece is too long, cut a sentence — do NOT trail off mid-sentence.
+
+═══ SECTION A — 4 REPLY PICKS ═══
+Pick 4 candidates Carlos should reply to. Selection criteria:
 - High engagement potential (controversy, hype, big news, hot takes)
 - Carlos can land an authentic Spanish reaction using his persona
 - VARIETY — spread across topics (players, refs, transfers, rivalry, matches)
 - Skip pure factual/news posts with no emotional hook
-- DIVERSIFY LENGTH — one should be short (1-2 sentences), one medium (3), one longer (4-5). Don't make them all the same length.
+- DIVERSIFY LENGTH within the 200-char cap — two short (1-2 sentences, ~80-130 chars), two longer (3-4 sentences, ~150-195 chars). Don't make them all the same length.
 
 For each pick, write Carlos's reply in his voice. USE REAL NAMES from his persona Section 6.5 when context allows — "Kerem", "Osimhen", "Kadıköy", "Okan hoca", "Saran", etc. Specific names = reach.
 
-═══ SECTION B — 2 RUMOR TWEETS ═══
-Write 2 ORIGINAL Spanish tweets where Carlos drops transfer/gossip rumors. These are NOT replies — they are standalone tweets Carlos posts as "insider chatter" he picked up.
+═══ SECTION B — 3 RUMOR TWEETS ═══
+Write 3 ORIGINAL Spanish tweets where Carlos drops transfer/gossip rumors. These are NOT replies — they are standalone tweets Carlos posts as "insider chatter" he picked up.
 
 FRAME AS INSIDER LEAKS:
 - "me cuentan desde Estambul que..."
@@ -1193,9 +1202,10 @@ RULES FOR RUMORS:
 - 3-5 sentences, Carlos's voice, can include one Turkish word ("maşallah", "yazık") naturally
 - NEVER claim signed/done deals. Keep it in "considering / meeting / rumored" territory.
 - These are RUMORS — plausible deniability. If anyone pushes back Carlos shrugs.
-- Example shape: "Me cuentan que Saran ya habló con [player] para el verano. Si eso sale bien cambia el mercado entero. Yazık para los que siguen creyendo en esa directiva... van a pagar una millonada para terminar 4º otra vez."
+- Pick 3 DIFFERENT angles (e.g. GS signing / FB coach drama / Turkish NT call-up).
+- Example shape (count chars yourself!): "Me cuentan que Saran ya habló con [player] para el verano. Si eso sale bien cambia el mercado entero. Yazık para los que siguen creyendo en esa directiva."
 
-You can draw topical context from what you see in the scraped candidates — if accounts are talking about a certain player or deal, your rumor can extend that thread naturally. Pick 2 DIFFERENT angles (e.g. one about a GS signing, one about a FB move or firing).
+You can draw topical context from what you see in the scraped candidates.
 
 ═══ CANDIDATES ═══
 ${numbered}
@@ -1204,17 +1214,19 @@ ${numbered}
 Return ONLY valid JSON, no markdown fences, no commentary, EXACTLY this shape:
 {
   "replyPicks": [
-    {"index": <n>, "reply": "<spanish reply>"},
-    {"index": <n>, "reply": "<spanish reply>"},
-    {"index": <n>, "reply": "<spanish reply>"}
+    {"index": <n>, "reply": "<spanish reply ≤200 chars>"},
+    {"index": <n>, "reply": "<spanish reply ≤200 chars>"},
+    {"index": <n>, "reply": "<spanish reply ≤200 chars>"},
+    {"index": <n>, "reply": "<spanish reply ≤200 chars>"}
   ],
   "rumorPicks": [
-    {"text": "<spanish rumor tweet>"},
-    {"text": "<spanish rumor tweet>"}
+    {"text": "<spanish rumor ≤270 chars>"},
+    {"text": "<spanish rumor ≤270 chars>"},
+    {"text": "<spanish rumor ≤270 chars>"}
   ]
 }
 
-Exactly 3 replyPicks (distinct indices 0-${candidates.length - 1}, no duplicates) and 2 rumorPicks.`;
+Exactly 4 replyPicks (distinct indices 0-${candidates.length - 1}, no duplicates) and 3 rumorPicks. ENFORCE the char limits — count before submitting.`;
 
   let curated;
   try {
@@ -1242,8 +1254,8 @@ Exactly 3 replyPicks (distinct indices 0-${candidates.length - 1}, no duplicates
     return;
   }
 
-  if (!curated?.replyPicks || curated.replyPicks.length !== 3 || !curated?.rumorPicks || curated.rumorPicks.length !== 2) {
-    setScoutStage('Curator returned wrong shape (need 3 replyPicks + 2 rumorPicks).', 'error');
+  if (!curated?.replyPicks || curated.replyPicks.length !== 4 || !curated?.rumorPicks || curated.rumorPicks.length !== 3) {
+    setScoutStage('Curator returned wrong shape (need 4 replyPicks + 3 rumorPicks).', 'error');
     return;
   }
 
@@ -1280,21 +1292,17 @@ Exactly 3 replyPicks (distinct indices 0-${candidates.length - 1}, no duplicates
     }
   });
 
-  const autos = enriched.filter(p => p.kind === 'auto');
-  const pendings = enriched.filter(p => p.kind === 'pending');
-
-  // Render pending immediately so user sees them while autos post.
-  renderPending(pendings);
-  document.getElementById('scoutPendingSection').style.display = 'block';
+  // Everything is auto now — no approval flow.
+  const autos = enriched;
+  document.getElementById('scoutPendingSection').style.display = 'none';
   document.getElementById('scoutAutoSection').style.display = 'block';
   renderAuto(autos, 'queueing');
 
-  // Auto-post the 2 autos.
-  setScoutStage('Posting 2 auto-tweets to Buffer...');
+  setScoutStage(`Posting all ${autos.length} tweets to Buffer...`);
   setScoutBadge('Posting');
   const bufferKey = getKey('buffer');
   if (!bufferKey) {
-    setScoutStage('No Buffer key saved — autos cannot be scheduled. Save key, then approve manually below.', 'error');
+    setScoutStage('No Buffer key saved — cannot schedule. Save your Buffer key in API Keys section below.', 'error');
     autos.forEach(a => a.error = 'No Buffer key');
     renderAuto(autos);
     return;
@@ -1310,17 +1318,42 @@ Exactly 3 replyPicks (distinct indices 0-${candidates.length - 1}, no duplicates
   }
   renderAuto(autos);
   const okCount = autos.filter(a => a.posted).length;
-  setScoutStage(`Done. ${okCount}/2 auto-posts scheduled. ${pendings.length} awaiting your approval below.`, 'success');
+  setScoutStage(`Done. ${okCount}/${autos.length} scheduled to Buffer.`, okCount === autos.length ? 'success' : 'error');
   setScoutBadge('Ready');
+}
+
+// Trim a reply to fit within `budget` chars, preferring a sentence boundary.
+// Falls back to word boundary, then hard-cut with ellipsis.
+function trimToBudget(reply, budget) {
+  reply = reply.trim();
+  if (reply.length <= budget) return reply;
+  // Try cutting at the last sentence terminator within budget.
+  const slice = reply.slice(0, budget);
+  const sentEnd = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('! '), slice.lastIndexOf('? '), slice.lastIndexOf('… '));
+  if (sentEnd > budget * 0.5) return slice.slice(0, sentEnd + 1).trim();
+  // Fall back to last word boundary.
+  const wordEnd = slice.lastIndexOf(' ');
+  if (wordEnd > budget * 0.5) return slice.slice(0, wordEnd).trim() + '…';
+  // Last resort.
+  return slice.slice(0, budget - 1).trim() + '…';
 }
 
 async function postPickToBuffer(pick, bufferKey) {
   // Replies: comment + linked tweet URL (workaround for quote-RT). Rumors: standalone text.
-  const text = pick.candidate?.url
-    ? `${pick.reply} ${pick.candidate.url}`.trim()
-    : pick.reply.trim();
+  // Hard cap at 280 with a safe truncation fallback so an overlong reply still ships.
+  let text;
+  if (pick.candidate?.url) {
+    const url = pick.candidate.url;
+    const budget = 280 - url.length - 1; // -1 for the space
+    const trimmed = trimToBudget(pick.reply, budget);
+    text = `${trimmed} ${url}`;
+  } else {
+    text = trimToBudget(pick.reply, 280);
+  }
+  // Reflect the actually-posted text back so the UI shows the truncated version.
+  pick.reply = pick.candidate?.url ? text.slice(0, text.length - pick.candidate.url.length - 1) : text;
   if (text.length > 280) {
-    throw new Error(`Over 280 chars (${text.length})`);
+    throw new Error(`Could not trim under 280 (${text.length})`);
   }
   const res = await fetch('/.netlify/functions/buffer-post', {
     method: 'POST',
